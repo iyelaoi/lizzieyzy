@@ -278,6 +278,8 @@ public class LizzieFrame extends JFrame {
   private int[] startcoords = new int[2];
   private int[] draggedCoords;
   public JPanel mainPanel;
+  public JPanel mainBackgroundPanel;
+  public JPanel mainStonePanel;
   public JToolBar topPanel;
   // private JPanel listPanel;
   private boolean canShowBigBoardImage = true;
@@ -538,13 +540,28 @@ public class LizzieFrame extends JFrame {
             //        	  g1.setTransform(t);
             //        	  g.setColor(Color.DARK_GRAY);
             //        	  g.fillRect(0, 0, mainPanel.getWidth(), mainPanel.getHeight());
-            if (Config.isScaled) {
-              Graphics2D g1 = (Graphics2D) g;
+        	  Graphics2D g1 = (Graphics2D) g;
+        	  g1.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_ATOP));
+            if (Config.isScaled) {              
               g1.scale(1.0 / Lizzie.javaScaleFactor, 1.0 / Lizzie.javaScaleFactor);
             }
-            paintMianPanel(g);
+            paintInfoPane(g);
           }
         };
+        mainPanel.setOpaque(false);
+        
+        mainBackgroundPanel =
+                new JPanel(true) {
+            @Override
+            protected void paintComponent(Graphics g) {
+              if (Config.isScaled) {
+                Graphics2D g1 = (Graphics2D) g;
+                g1.scale(1.0 / Lizzie.javaScaleFactor, 1.0 / Lizzie.javaScaleFactor);
+              }
+            	paintBackgroundPane(g);
+            }
+          };
+          mainBackgroundPanel.enableInputMethods(false);
     mainPanel.enableInputMethods(false);
 
     mainPanel.addMouseListener(
@@ -1549,7 +1566,9 @@ public class LizzieFrame extends JFrame {
     mainPanel.addMouseMotionListener(input);
     toolbar.addMouseWheelListener(input);
     addInput(false);
+ 
     getContentPane().add(basePanel);
+   
     basePanel.add(commentBlunderControlPane, new Integer(900));
 
     basePanel.add(tempGamePanelAll, new Integer(800));
@@ -1561,6 +1580,8 @@ public class LizzieFrame extends JFrame {
     basePanel.add(topPanel, new Integer(300));
     basePanel.add(toolbar, new Integer(200));
     basePanel.add(mainPanel, new Integer(100));
+    basePanel.add(mainBackgroundPanel, new Integer(10));
+    
     mainPanel.setVisible(false);
     commentScrollPane.setVisible(false);
     blunderContentPane.setVisible(false);
@@ -3515,6 +3536,7 @@ public class LizzieFrame extends JFrame {
   }
 
   private BufferedImage cachedImage;
+  private BufferedImage cachedBackImage;
   private BufferedImage cachedVarImage;
   private BufferedImage cachedVarImage2;
   private BufferedImage cachedBackground;
@@ -5079,17 +5101,22 @@ public class LizzieFrame extends JFrame {
     redrawBackgroundAnyway = true;
     if (Lizzie.config.isFloatBoardMode()) this.paintMianPanel(mainPanel.getGraphics());
   }
+  
+  public void refreshInfo() {
+	  mainPanel.repaint();
+  }
 
   public void refresh() {
     // 分开各部分刷新,1代表来自info move的刷新
     redrawWinratePaneOnly = false;
-    repaint();
+    refreshInfo();
     if (independentSubBoard != null && independentSubBoard.isVisible())
       independentSubBoard.refresh();
     if (independentMainBoard != null && independentMainBoard.isVisible())
       independentMainBoard.refresh();
-    if (floatBoard != null && floatBoard.isVisible()) floatBoard.refresh();
+    if (floatBoard != null && floatBoard.isVisible()) floatBoard.refresh();  
     appendComment();
+    
   }
 
   public void refresh(int mode) {
@@ -5098,15 +5125,15 @@ public class LizzieFrame extends JFrame {
     switch (mode) {
       case 1:
         refreshFromInfo = true;
-        repaint();
+        refreshInfo();
       default:
     }
-    if (independentSubBoard != null && independentSubBoard.isVisible())
-      independentSubBoard.refresh();
-    if (independentMainBoard != null && independentMainBoard.isVisible())
-      independentMainBoard.refresh();
-    if (floatBoard != null && floatBoard.isVisible()) floatBoard.refresh();
-    appendComment();
+//    if (independentSubBoard != null && independentSubBoard.isVisible())
+//      independentSubBoard.refresh();
+//    if (independentMainBoard != null && independentMainBoard.isVisible())
+//      independentMainBoard.refresh();
+//    if (floatBoard != null && floatBoard.isVisible()) floatBoard.refresh();
+//    appendComment();
   }
 
   private void updateMoveListMaybe() {
@@ -7576,10 +7603,10 @@ public class LizzieFrame extends JFrame {
    * @param h
    */
   private void drawComment(Graphics2D g, int x, int y, int w, int h) {
-    if (isCommentArea) {
-      g.setColor(Lizzie.config.commentBackgroundColor);
-      g.fillRect(x, y, w, h);
-    }
+//    if (isCommentArea) {
+//      g.setColor(Lizzie.config.commentBackgroundColor);
+//      g.fillRect(x, y, w, h);
+//    }
     if (w < 10 || h < 10) {
       commentScrollPane.setBounds(0, 0, 0, 0);
       blunderContentPane.setBounds(0, 0, 0, 0);
@@ -10015,6 +10042,17 @@ public class LizzieFrame extends JFrame {
                         - Lizzie.frame.getInsets().bottom
                         - toolbarHeight
                         - (Lizzie.config.showDoubleMenu ? topPanelHeight : 0)));
+            mainBackgroundPanel.setBounds(
+                    0,
+                    (Lizzie.config.showDoubleMenu ? topPanelHeight : 0),
+                    Utils.zoomOut(width),
+                    Utils.zoomOut(
+                        Lizzie.frame.getHeight()
+                            - Lizzie.frame.getJMenuBar().getHeight()
+                            - Lizzie.frame.getInsets().top
+                            - Lizzie.frame.getInsets().bottom
+                            - toolbarHeight
+                            - (Lizzie.config.showDoubleMenu ? topPanelHeight : 0)));
             toolbar.setBounds(
                 0,
                 Lizzie.frame.getHeight()
@@ -12438,14 +12476,23 @@ public class LizzieFrame extends JFrame {
     return player;
   }
   
-  public void paintLayeredPanel(Graphics g0,boolean refreshInfo,boolean refreshStone,boolean refreshBack) {
-	    if (refreshInfo&&this.redrawWinratePaneOnly) {
-	      drawWinratePane(this.grx, this.gry, this.grw, this.grh);
-	      redrawWinratePaneOnly = false;
-	    } else {
+  private void drawCommentBackground(Graphics2D g, int x, int y, int w, int h) {
+	    if (isCommentArea) {
+	      g.setColor(Lizzie.config.commentBackgroundColor);
+	      g.fillRect(x, y, w, h);
+	    }
+	    }
+  
+  public void paintStonePane(Graphics g0)
+  {
+	  
+  }
+  
+  public void paintBackgroundPane(Graphics g0)
+  {	
 	      isSmallCap = false;
-	      int width = mainPanel.getWidth();
-	      int height = mainPanel.getHeight();
+	      int width = mainBackgroundPanel.getWidth();
+	      int height = mainBackgroundPanel.getHeight();
 
 	      Optional<Graphics2D> backgroundG;
 	      if (cachedBackgroundWidth != width
@@ -12456,276 +12503,159 @@ public class LizzieFrame extends JFrame {
 	        backgroundG = Optional.empty();
 	      }
 	      if (!showControls) {
-	        // aaa
 	        BufferedImage cachedImage = new BufferedImage(width, height, TYPE_INT_ARGB);
 	        Graphics2D g = (Graphics2D) cachedImage.getGraphics();
 	        g.setRenderingHint(RenderingHints.KEY_RENDERING, RenderingHints.VALUE_RENDER_QUALITY);
 	        if (Lizzie.config.isFourSubMode()) {
-	          int topInset = mainPanel.getInsets().top;
-	          int leftInset = mainPanel.getInsets().left;
-	          int rightInset = mainPanel.getInsets().right;
-	          int bottomInset = mainPanel.getInsets().bottom; // + this.getJMenuBar().getHeight();
-	          // int maxBound = Math.max(width, height);
+	          int topInset = mainBackgroundPanel.getInsets().top;
+	          int leftInset = mainBackgroundPanel.getInsets().left;
+	          int rightInset = mainBackgroundPanel.getInsets().right;
+	          int bottomInset = mainBackgroundPanel.getInsets().bottom;
 
 	          boolean noWinrate = !Lizzie.config.showWinrateGraph;
 	          boolean noVariation = !Lizzie.config.showVariationGraph;
 	          boolean noBasic = !Lizzie.config.showCaptured;
-	          // boolean noSubBoard = !Lizzie.config.showSubBoard;
 	          boolean noComment = !Lizzie.config.showComment || Lizzie.config.showListPane();
 	          boolean noListPane = !Lizzie.config.showListPane();
 	          boolean noCommentAndListPane = noComment && noListPane;
 	          // board
-	          subMaxSize = (int) (min(width - leftInset - rightInset, height - topInset - bottomInset));
+	        int  subMaxSize = (int) (min(width - leftInset - rightInset, height - topInset - bottomInset));
 	          subMaxSize = max(subMaxSize, max(Board.boardWidth, Board.boardHeight) + 5);
-	          //  subBoardLengthmouse = subBoardLength;
 	          subBoardRenderer.setLocation(topInset, leftInset);
 	          subBoardRenderer.setBoardLength(subMaxSize / 2, subMaxSize / 2);
-	          subBoardRenderer.setupSizeParameters();
-	          subBoardRenderer.draw(g);
+	          subBoardRenderer.drawBackground(g);
 
 	          subBoardRenderer2.setLocation(subMaxSize / 2, leftInset);
 	          subBoardRenderer2.setBoardLength(subMaxSize / 2, subMaxSize / 2);
-	          subBoardRenderer2.setupSizeParameters();
-	          subBoardRenderer2.draw(g);
+	          subBoardRenderer2.drawBackground(g);
 
 	          subBoardRenderer3.setLocation(topInset, subMaxSize / 2);
 	          subBoardRenderer3.setBoardLength(subMaxSize / 2, subMaxSize / 2);
 	          subBoardRenderer3.setupSizeParameters();
-	          subBoardRenderer3.draw(g);
+	          subBoardRenderer3.drawBackground(g);
 
 	          subBoardRenderer4.setLocation(subMaxSize / 2, subMaxSize / 2);
 	          subBoardRenderer4.setBoardLength(subMaxSize / 2, subMaxSize / 2);
-	          subBoardRenderer4.setupSizeParameters();
-	          subBoardRenderer4.draw(g);
-
-	          subBoardLengthmouse = subMaxSize;
+	          subBoardRenderer4.drawBackground(g);
 
 	          int trueWidth = width - leftInset - rightInset - subMaxSize;
 	          int trueHeight = height - topInset - bottomInset;
 
 	          boolean isWidth = trueWidth * 0.72 > trueHeight;
 	          if (isWidth) {
-	            maxSize = (int) (min(trueWidth, trueHeight));
+	        	  int  maxSize = (int) (min(trueWidth, trueHeight));
 	            maxSize = max(maxSize, max(Board.boardWidth, Board.boardHeight) + 5);
-	            boardX = width - maxSize; // ) / 8 * BoardPositionProportion;
-	            boardY = trueHeight - maxSize;
+	            int  boardX = width - maxSize; // ) / 8 * BoardPositionProportion;
+	            int   boardY = trueHeight - maxSize;
 	            boardRenderer.setLocation(boardX, boardY);
 	            boardRenderer.setBoardLength(maxSize, maxSize);
-	            boardRenderer.setupSizeParameters();
-	            boardRenderer.draw(g);
+	            boardRenderer.drawBackground(g);
 
 	            int vh = trueHeight;
 	            int vw = boardX - subMaxSize;
 	            int vx = subMaxSize;
 	            int vy = 0;
-	            if (backgroundG.isPresent()) {
-	              bufferedContainer = drawContainer(vx, vy, vw, vh / 2);
-	            }
 
 	            if (!noVariation) {
 	              if (!noCommentAndListPane) {
 	                if (noWinrate && noBasic) {
-	                  if (bufferedContainer != null) {
-	                    g.drawImage(bufferedContainer, vx, vy, null);
-	                    g.drawImage(bufferedContainer, vx, vy + vh / 2, null);
-	                  }
-	                  createVarTreeImage(vx, vy + vh, vw, vh / 2, g);
-	                  if (noComment) setListScrollpane(vx, vy + vh / 2, vw, vh / 2);
-	                  else if (noListPane) drawComment(g, vx, vy + vh / 2, vw, vh / 2);
+	                	 {if (backgroundG.isPresent()) 
+	                	  drawContainer(backgroundG.get(),vx, vy, vw, vh);
+	                	  if (noListPane) drawCommentBackground(g, vx, vy + vh / 2, vw, vh / 2);
+	                	 }
 	                } else {
-	                  if (bufferedContainer != null) {
-	                    g.drawImage(bufferedContainer, vx, vy + vh / 2, null);
-	                  }
-	                  createVarTreeImage(vx, vy + vh / 2, vw, vh / 4, g);
-	                  if (noComment) setListScrollpane(vx, vy + vh * 3 / 4, vw, vh / 4);
-	                  else if (noListPane) drawComment(g, vx, vy + vh * 3 / 4, vw, vh / 4);
+	                  if (backgroundG.isPresent()) 
+	                	  drawContainer(backgroundG.get(),vx,  vy + vh / 2, vw, vh/2);
+	                	  if (noListPane) drawCommentBackground(g, vx, vy + vh * 3 / 4, vw, vh / 4);
 	                }
 	              } else {
 	                if (noWinrate && noBasic) {
-	                  if (bufferedContainer != null) {
-	                    g.drawImage(bufferedContainer, vx, vy, null);
-	                    g.drawImage(bufferedContainer, vx, vy + vh / 2, null);
-	                  }
-	                  createVarTreeImage(vx, vy, vw, vh, g);
+	                	if (backgroundG.isPresent()) 
+		                	  drawContainer(backgroundG.get(),vx, vy, vw, vh);
 	                } else {
-	                  if (bufferedContainer != null) {
-	                    g.drawImage(bufferedContainer, vx, vy + vh / 2, null);
-	                  }
-	                  createVarTreeImage(vx, vy + vh / 2, vw, vh / 2, g);
+	                	if (backgroundG.isPresent()) 
+		                	  drawContainer(backgroundG.get(),vx,  vy + vh / 2, vw, vh/2);
 	                }
 	              }
-	              // drawComment(g, cx, cy, cw, ch);
-	              //  variationTree.drawsmall(g, treex, treey, treew, treeh);
 	            } else if (!noCommentAndListPane) {
-	              if (noComment) setListScrollpane(vx, vy + vh / 2, vw, vh / 2);
-	              else if (noListPane) drawComment(g, vx, vy + vh / 2, vw, vh / 2);
+	               if (noListPane) drawCommentBackground(g, vx, vy + vh / 2, vw, vh / 2);
 	            }
 	            if (!noWinrate) {
-	              if (bufferedContainer != null) g.drawImage(bufferedContainer, subMaxSize, 0, null);
-	              if (!noBasic) {
-	                grw = vw;
-	                grx = vx;
-	                gry = vy + vh / 4;
-	                grh = vh / 4;
-	                drawWinratePane(grx, gry, grw, grh);
-	                // winrateGraph.draw(g, grx, gry, grw, grh);
-	                statx = vx;
-	                staty = vy;
-	                statw = vw;
-	                stath = vh / 4;
-	                drawMoveStatistics(g, statx, staty + stath / 2, statw, stath / 2);
-	                drawCaptured(g, statx, staty, statw, stath / 2, true);
+	              if (backgroundG.isPresent()) 
+                	  drawContainer(backgroundG.get(),subMaxSize,  0, vw, vh/2);
+	              if (!noBasic) {	            	  
+	                drawWinrateBackground(g,vx, vy + vh / 4, vw,  vh / 4);
 	              } else {
-	                grw = vw;
-	                grx = vx;
-	                gry = vy;
-	                grh = vh / 2;
-	                drawWinratePane(grx, gry, grw, grh);
-	                // winrateGraph.draw(g, grx, gry, grw, grh);
+	                drawWinrateBackground(g,vx, vy, vw,  vh / 2);
 	              }
 	            } else if (!noBasic) {
-	              if (bufferedContainer != null) g.drawImage(bufferedContainer, subMaxSize, 0, null);
-	              statx = vx;
-	              staty = vy;
-	              statw = vw;
-	              stath = vh / 2;
-	              drawMoveStatistics(g, statx, staty + stath / 2, statw, stath / 2);
-	              drawCaptured(g, statx, staty, statw, stath / 2, true);
+	            	 if (backgroundG.isPresent()) 
+	                	  drawContainer(backgroundG.get(),subMaxSize,  0, vw, vh/2);
 	            }
-
 	          } else {
-
-	            maxSize = (int) (min(trueWidth, 0.77 * trueHeight));
+	            int maxSize = (int) (min(trueWidth, 0.77 * trueHeight));
 	            maxSize = max(maxSize, max(Board.boardWidth, Board.boardHeight) + 5);
-	            boardX = subMaxSize; // ) / 8 * BoardPositionProportion;
-	            boardY = trueHeight - maxSize;
+	            int boardX = subMaxSize; // ) / 8 * BoardPositionProportion;
+	            int boardY = trueHeight - maxSize;
 	            boardRenderer.setLocation(boardX, boardY);
 	            boardRenderer.setBoardLength(maxSize, maxSize);
-	            boardRenderer.setupSizeParameters();
-	            boardRenderer.draw(g);
+	            boardRenderer.drawBackground(g);
 
 	            int vx = boardX;
 	            int vy = 0;
 	            int vw = trueWidth;
 	            int vh = boardY;
 
-	            if (backgroundG.isPresent()) {
-	              bufferedContainer = drawContainer(vx, vy, vw, vh / 2);
-	            }
-	            //        if (backgroundG.isPresent()) {
-	            //          drawContainer(
-	            //              backgroundG.get(), vx, vy, vw, vh);
-	            //        }
 	            if (!noVariation) {
 	              if (noWinrate && noBasic) {
-	                if (bufferedContainer != null) {
-	                  g.drawImage(bufferedContainer, vx, vy, null);
-	                  g.drawImage(bufferedContainer, vx, vy + vh / 2, null);
-	                }
+	            	   if (backgroundG.isPresent()) 
+	                 	  drawContainer(backgroundG.get(),vx,  vy, vw, vh);
 	                if (!noCommentAndListPane) {
-	                  if (noComment) setListScrollpane(vx, vy, vw / 2, vh);
-	                  else if (noListPane) drawComment(g, vx, vy, vw / 2, vh);
-	                  createVarTreeImage(vx + vw / 2, vy, vw / 2, vh, g);
-	                } else createVarTreeImage(vx, vy, vw, vh, g);
+	                	if (noListPane) drawCommentBackground(g, vx, vy, vw / 2, vh);
+	                } 
 	              } else {
-	                if (bufferedContainer != null)
-	                  g.drawImage(bufferedContainer, vx, vy + vh / 2, null);
-	                if (!noCommentAndListPane) {
-	                  if (noComment) setListScrollpane(vx, vy + vh / 2, vw / 2, vh / 2);
-	                  else if (noListPane) drawComment(g, vx, vy + vh / 2, vw / 2, vh / 2);
-	                  createVarTreeImage(vx + vw / 2, vy + vh / 2, vw / 2, vh / 2, g);
-	                } else createVarTreeImage(vx, vy + vh / 2, vw, vh / 2, g);
+	            	  if (backgroundG.isPresent()) 
+	                 	  drawContainer(backgroundG.get(),vx,  vy+vh/2, vw, vh/2);
+	                if (!noCommentAndListPane) { 
+	                	if (noListPane) drawCommentBackground(g, vx, vy + vh / 2, vw / 2, vh / 2);	                 
+	                }
 	              }
 	            } else if (noWinrate && noBasic) {
-	              if (bufferedContainer != null) {
-	                g.drawImage(bufferedContainer, vx, vy, null);
-	                g.drawImage(bufferedContainer, vx, vy + vh / 2, null);
-	              }
-	              if (noComment) setListScrollpane(vx, vy, vw, vh);
-	              else if (noListPane) drawComment(g, vx, vy, vw, vh);
+	            	if (backgroundG.isPresent()) 
+	                 	  drawContainer(backgroundG.get(),vx,  vy, vw, vh);
+	               if (noListPane) drawCommentBackground(g, vx, vy, vw, vh);
 	            } else {
 	              if (!noCommentAndListPane) {
-	                if (bufferedContainer != null)
-	                  g.drawImage(bufferedContainer, vx, vy + vh / 2, null);
-	                if (noComment) setListScrollpane(vx, vy + vh / 2, vw, vh / 2);
-	                else if (noListPane) drawComment(g, vx, vy + vh / 2, vw, vh / 2);
+	            	  if (backgroundG.isPresent()) 
+	                 	  drawContainer(backgroundG.get(),vx,  vy+vh/2, vw, vh/2);
+	            	  if (noListPane) drawCommentBackground(g, vx, vy + vh / 2, vw, vh / 2);
 	              }
 	            }
-
 	            if (!noWinrate) {
 	              if (noCommentAndListPane && noVariation) {
-	                if (bufferedContainer != null) {
-	                  g.drawImage(bufferedContainer, vx, vy, null);
-	                  g.drawImage(bufferedContainer, vx, vy + vh / 2, null);
-	                }
-
+	            	   if (backgroundG.isPresent()) 
+		                 	  drawContainer(backgroundG.get(),vx,  vy, vw, vh);
 	                if (!noBasic) {
-	                  grx = vx + vw / 2;
-	                  gry = vy;
-	                  grw = vw / 2;
-	                  grh = vh;
-	                  drawWinratePane(grx, gry, grw, grh);
-	                  // winrateGraph.draw(g, grx, gry, grw, grh);
-	                  statx = vx;
-	                  staty = vy;
-	                  statw = vw / 2;
-	                  stath = vh;
-	                  drawCaptured(g, statx, staty, statw, stath / 2, true);
-	                  drawMoveStatistics(g, statx, staty + stath / 2, statw, stath / 2);
+	                  drawWinrateBackground(g,vx + vw / 2, vy,  vw / 2, vh);	                  
 	                } else {
-	                  grx = vx;
-	                  gry = vy;
-	                  grw = vw;
-	                  grh = vh;
-	                  drawWinratePane(grx, gry, grw, grh);
-	                  // winrateGraph.draw(g, grx, gry, grw, grh);
+	                  drawWinrateBackground(g,vx, vy,  vw , vh);
 	                }
-
 	              } else {
-	                if (bufferedContainer != null) g.drawImage(bufferedContainer, vx, vy, null);
+	            	  if (backgroundG.isPresent()) 
+	                 	  drawContainer(backgroundG.get(),vx,  vy, vw, vh/2);
 	                if (!noBasic) {
-	                  grx = vx + vw / 2;
-	                  gry = vy;
-	                  grw = vw / 2;
-	                  grh = vh / 2;
-	                  drawWinratePane(grx, gry, grw, grh);
-	                  // winrateGraph.draw(g, grx, gry, grw, grh);
-	                  statx = vx;
-	                  staty = vy;
-	                  statw = vw / 2;
-	                  stath = vh / 2;
-	                  drawCaptured(g, statx, staty, statw, stath / 2, true);
-	                  drawMoveStatistics(g, statx, staty + stath / 2, statw, stath / 2);
+	                  drawWinrateBackground(g,vx + vw / 2, vy, vw / 2, vh / 2);	                
 	                } else {
-	                  grx = vx;
-	                  gry = vy;
-	                  grw = vw;
-	                  grh = vh / 2;
-	                  drawWinratePane(grx, gry, grw, grh);
-	                  // winrateGraph.draw(g, grx, gry, grw, grh);
+	                  drawWinrateBackground(g,vx, vy, vw, vh / 2);		                
 	                }
 	              }
 	            } else if (!noBasic) {
-
 	              if (noCommentAndListPane && noVariation) {
-	                if (bufferedContainer != null) {
-	                  g.drawImage(bufferedContainer, vx, vy, null);
-	                  g.drawImage(bufferedContainer, vx, vy + vh / 2, null);
-	                }
-	                statx = vx;
-	                staty = vy;
-	                statw = vw;
-	                stath = vh;
-	                drawCaptured(g, statx, staty, statw, stath / 2, true);
-	                drawMoveStatistics(g, statx, staty + stath / 2, statw, stath / 2);
+	            	   if (backgroundG.isPresent()) 
+		                 	  drawContainer(backgroundG.get(),vx,  vy, vw, vh);
 	              } else {
-	                if (bufferedContainer != null) g.drawImage(bufferedContainer, vx, vy, null);
-	                statx = vx;
-	                staty = vy;
-	                statw = vw;
-	                stath = vh / 2;
-	                drawCaptured(g, statx, staty, statw, stath / 2, true);
-	                drawMoveStatistics(g, statx, staty + stath / 2, statw, stath / 2);
+	            	   if (backgroundG.isPresent()) 
+		                 	  drawContainer(backgroundG.get(),vx,  vy, vw, vh/2);
 	              }
 	            }
 	          }
@@ -12846,13 +12776,11 @@ public class LizzieFrame extends JFrame {
 	          int topInset = mainPanel.getInsets().top;
 	          int leftInset = mainPanel.getInsets().left;
 	          int rightInset = mainPanel.getInsets().right;
-	          int bottomInset = mainPanel.getInsets().bottom; // + this.getJMenuBar().getHeight();
-	          // int maxBound = Math.max(width, height);
+	          int bottomInset = mainPanel.getInsets().bottom;
 
 	          boolean noWinrate = !Lizzie.config.showWinrateGraph;
 	          boolean noVariation = !Lizzie.config.showVariationGraph;
 	          boolean noBasic = !Lizzie.config.showCaptured;
-	          //   boolean noSubBoard = !Lizzie.config.showSubBoard;
 	          boolean noComment = !Lizzie.config.showComment || Lizzie.config.showListPane();
 	          boolean noListPane = !Lizzie.config.showListPane();
 	          boolean noCommentAndListPane = noComment && noListPane;
@@ -12860,18 +12788,6 @@ public class LizzieFrame extends JFrame {
 	          // board
 	          subMaxSize = (int) (min(width - leftInset - rightInset, height - topInset - bottomInset));
 	          subMaxSize = max(subMaxSize, max(Board.boardWidth, Board.boardHeight) + 5);
-	          //         subBoardX = 0;//(width - maxSize) / 8 * BoardPositionProportion;
-	          //         subBoardY = 0;
-
-	          //  cachedImage = new BufferedImage(width, height, TYPE_INT_ARGB);
-	          // Graphics2D g = (Graphics2D) cachedImage.getGraphics();
-	          //     g.setRenderingHint(RenderingHints.KEY_RENDERING,
-	          // RenderingHints.VALUE_RENDER_QUALITY);
-
-	          // subBoardRenderer.setLocation( cx,cy);
-	          // subBoardXmouse = subBoardX;
-	          // subBoardYmouse = subBoardY;
-	          //  subBoardLengthmouse = subBoardLength;
 	          boardRenderer2.setLocation(topInset, leftInset);
 	          boardRenderer2.setBoardLength(subMaxSize, subMaxSize);
 	          boardRenderer2.setupSizeParameters();
@@ -12990,10 +12906,6 @@ public class LizzieFrame extends JFrame {
 	            if (backgroundG.isPresent()) {
 	              bufferedContainer = drawContainer(vx, vy, vw, vh / 2);
 	            }
-	            //        if (backgroundG.isPresent()) {
-	            //          drawContainer(
-	            //              backgroundG.get(), vx, vy, vw, vh);
-	            //        }
 	            if (!noVariation) {
 	              if (noWinrate && noBasic) {
 	                if (bufferedContainer != null) {
@@ -13615,9 +13527,6 @@ public class LizzieFrame extends JFrame {
 	                            : Lizzie.resourceBundle.getString("LizzieFrame.display.space"));
 	                String ponderingText =
 	                    Lizzie.resourceBundle.getString("LizzieFrame.display.pondering");
-	                //   String switching
-	                // =Lizzie.resourceBundle.getString("LizzieFrame.prompt.switching");
-	                // String switchingText = Lizzie.leelaz.switching() ? switching : "";
 	                String weightText = "";
 	                if (EngineManager.isEmpty)
 	                  weightText = Lizzie.resourceBundle.getString("LizzieFrame.noEngineText");
@@ -13630,21 +13539,7 @@ public class LizzieFrame extends JFrame {
 	                drawPonderingState(g, loadingText, loadingX, loadingY, loadingSize);
 	              }
 	            }
-
-	            //  if (firstTime) {
-	            // toolbar.setAllUnfocuse();
-	            //  firstTime = false;
-	            //   }
-	            // Optional<String> dynamicKomi = Lizzie.leelaz.getDynamicKomi();
-	            // if (Lizzie.config.showDynamicKomi && dynamicKomi.isPresent()) {
-	            // String text =Lizzie.resourceBundle.getString("LizzieFrame.display.dynamic-komi");
-	            // drawPonderingState(g, text, dynamicKomiLabelX, dynamicKomiLabelY,
-	            // dynamicKomiSize);
-	            // drawPonderingState(g, dynamicKomi.get(), dynamicKomiX, dynamicKomiY,
-	            // dynamicKomiSize);
-	            // }
-
-	            // Todo: Make board move over when there is no space beside the board
+	            
 	            if (Lizzie.config.showCaptured) {
 	              if (Lizzie.config.showLargeSubBoard()
 	                  && !noSubBoard
@@ -13652,12 +13547,8 @@ public class LizzieFrame extends JFrame {
 	                drawCaptured(g, capx, capy, capw, treeh, isSmallCap);
 	              else drawCaptured(g, capx, capy, capw, caph, isSmallCap);
 	            }
-	            // dcl
 
 	            if (Lizzie.config.showVariationGraph || showListPane || Lizzie.config.showComment) {
-	              // if (backgroundG.isPresent()) {
-	              // drawContainer(backgroundG.get(), vx, vy, vw, vh);
-	              // }
 	              if (Lizzie.config.showVariationGraph || showListPane) {
 	                if (!Lizzie.config.showLargeSubBoard() && !Lizzie.config.showLargeWinrate()) {
 	                  if ((Lizzie.config.showSubBoard && !Lizzie.config.showComment)) treeh = vh;
@@ -13672,10 +13563,6 @@ public class LizzieFrame extends JFrame {
 	                    setListScrollpane(treex, treey, treew, treeh);
 	                  }
 	                }
-	                //            if (isSmallCap) {
-	                //              createVarTreeImage(treex, treey, treew, treeh);
-	                //            } else
-	                // drawVariationTree(g, treex, treey, treew, treeh);
 	                if ((Lizzie.config.showLargeSubBoard() || Lizzie.config.showLargeWinrate())
 	                    && !Lizzie.config.showCaptured)
 	                  createVarTreeImage(treex - treew, treey, treew * 2, treeh, g);
@@ -13698,12 +13585,10 @@ public class LizzieFrame extends JFrame {
 	                drawComment(g, cx, cy, cw, ch);
 	              }
 	            }
-	            // 更改布局为大棋盘,一整条分支列表,小棋盘,评论放在左下,做到这里
 	            if (Lizzie.config.showSubBoard) {
 	              try {
 
 	                subBoardRenderer.setLocation(subBoardX, subBoardY);
-	                // subBoardRenderer.setLocation( cx,cy);
 	                subBoardRenderer.setBoardLength(subBoardLength, subBoardLength);
 
 	                subBoardXmouse = subBoardX;
@@ -13717,13 +13602,6 @@ public class LizzieFrame extends JFrame {
 	              }
 	            }
 	            if (Lizzie.config.showWinrateGraph) {
-	              // drawMoveStatistics(g, statx, staty, statw, stath);
-	              // if (backgroundG.isPresent()) {
-	              // if (isSmallCap) {
-	              // contw = contw + contw;
-	              // }
-	              // drawContainer(backgroundG.get(), contx, conty, contw, conth);
-	              // }
 	              if (showListPane && isLargeSubboard) {
 	                if (!Lizzie.config.showVariationGraph) {
 	                  if (noComment) setListScrollpane(vx, vy, vw, vh);
@@ -13743,8 +13621,6 @@ public class LizzieFrame extends JFrame {
 	                grh += caph;
 	              }
 	              drawWinratePane(grx, gry, grw, grh);
-	              //  winrateGraph.draw(g, grx, gry, grw, grh);
-	              //  }
 	            } else if (isLargeSubboard) {
 	              setListScrollpane(grx, gry, grw, grh);
 	            }
@@ -13824,9 +13700,6 @@ public class LizzieFrame extends JFrame {
 	                            : Lizzie.resourceBundle.getString("LizzieFrame.display.space"));
 	                String ponderingText =
 	                    Lizzie.resourceBundle.getString("LizzieFrame.display.pondering");
-	                //      String switching
-	                // =Lizzie.resourceBundle.getString("LizzieFrame.prompt.switching");
-	                // String switchingText = Lizzie.leelaz.switching() ? switching : "";
 	                String weightText = "";
 	                if (EngineManager.isEmpty)
 	                  weightText = Lizzie.resourceBundle.getString("LizzieFrame.noEngineText");
@@ -13859,9 +13732,1331 @@ public class LizzieFrame extends JFrame {
 	            // dcl
 
 	            if (Lizzie.config.showVariationGraph || showListPane || Lizzie.config.showComment) {
-	              // if (backgroundG.isPresent()) {
-	              // drawContainer(backgroundG.get(), vx, vy, vw, vh);
-	              // }
+	              if (Lizzie.config.showVariationGraph || showListPane) {
+	                if (showListPane) {
+	                  if (Lizzie.config.showVariationGraph) {
+	                    setListScrollpane(treex, treey, treew / 2, treeh);
+	                    createVarTreeImage(treex + treew / 2, treey, treew / 2, treeh, g);
+	                  } else {
+	                    setListScrollpane(treex, treey, treew, treeh);
+	                  }
+	                } else createVarTreeImage(treex, treey, treew, treeh, g);
+	              }
+
+	              if (Lizzie.config.showComment) {
+	                drawComment(g, cx, cy, cw, ch - (height + topInset - bottomInset - ponderingY));
+	              }
+	            }
+
+	            if (Lizzie.config.showSubBoard) {
+	              try {
+	                subBoardRenderer.setLocation(subBoardX, subBoardY);
+	                subBoardRenderer.setBoardLength(subBoardLength, subBoardLength);
+	                subBoardXmouse = subBoardX;
+	                subBoardYmouse = subBoardY;
+	                subBoardLengthmouse = subBoardLength;
+	                subBoardRenderer.setupSizeParameters();
+	                subBoardRenderer.draw(g);
+	              } catch (Exception e) {
+	                // This can happen when no space is left for subboard.
+	              }
+	            }
+	            if (Lizzie.config.showWinrateGraph) {
+	              drawWinratePane(grx, gry, grw, grh);
+	            }
+	          }
+	        }
+	        // cleanup
+	        g.dispose();
+	        this.cachedBackImage = cachedImage;
+	      }
+	    
+	    // draw the image
+	    g0.drawImage(cachedBackground, 0, 0, null);
+	    g0.drawImage(cachedBackImage, 0, 0, null);
+  }
+  
+  public void paintInfoPane(Graphics g0) {
+	    if (this.redrawWinratePaneOnly) {
+	    	drawWinratePaneInfo(this.grx, this.gry, this.grw, this.grh);
+	      redrawWinratePaneOnly = false;
+	    } else 
+	    {
+	      isSmallCap = false;
+	      int width = mainPanel.getWidth();
+	      int height = mainPanel.getHeight();
+
+//	      Optional<Graphics2D> backgroundG;
+//	      if (cachedBackgroundWidth != width
+//	          || cachedBackgroundHeight != height
+//	          || redrawBackgroundAnyway) {
+//	        backgroundG = Optional.of(createBackground(width, height));
+//	      } else {
+//	        backgroundG = Optional.empty();
+//	      }
+	      if (!showControls) {
+	        // aaa
+	        BufferedImage cachedImage = new BufferedImage(width, height, TYPE_INT_ARGB);
+	        Graphics2D g = (Graphics2D) cachedImage.getGraphics();
+	        g.setRenderingHint(RenderingHints.KEY_RENDERING, RenderingHints.VALUE_RENDER_QUALITY);
+	        if (Lizzie.config.isFourSubMode()) {
+	          int topInset = mainPanel.getInsets().top;
+	          int leftInset = mainPanel.getInsets().left;
+	          int rightInset = mainPanel.getInsets().right;
+	          int bottomInset = mainPanel.getInsets().bottom; // + this.getJMenuBar().getHeight();
+	          // int maxBound = Math.max(width, height);
+
+	          boolean noWinrate = !Lizzie.config.showWinrateGraph;
+	          boolean noVariation = !Lizzie.config.showVariationGraph;
+	          boolean noBasic = !Lizzie.config.showCaptured;
+	          // boolean noSubBoard = !Lizzie.config.showSubBoard;
+	          boolean noComment = !Lizzie.config.showComment || Lizzie.config.showListPane();
+	          boolean noListPane = !Lizzie.config.showListPane();
+	          boolean noCommentAndListPane = noComment && noListPane;
+	          // board
+	          subMaxSize = (int) (min(width - leftInset - rightInset, height - topInset - bottomInset));
+	          subMaxSize = max(subMaxSize, max(Board.boardWidth, Board.boardHeight) + 5);
+	          //  subBoardLengthmouse = subBoardLength;
+	          subBoardRenderer.setLocation(topInset, leftInset);
+	          subBoardRenderer.setBoardLength(subMaxSize / 2, subMaxSize / 2);
+	          //subBoardRenderer.setupSizeParameters();
+	          subBoardRenderer.draw(g);
+
+	          subBoardRenderer2.setLocation(subMaxSize / 2, leftInset);
+	          subBoardRenderer2.setBoardLength(subMaxSize / 2, subMaxSize / 2);
+	         // subBoardRenderer2.setupSizeParameters();
+	          subBoardRenderer2.draw(g);
+
+	          subBoardRenderer3.setLocation(topInset, subMaxSize / 2);
+	          subBoardRenderer3.setBoardLength(subMaxSize / 2, subMaxSize / 2);
+	         // subBoardRenderer3.setupSizeParameters();
+	          subBoardRenderer3.draw(g);
+
+	          subBoardRenderer4.setLocation(subMaxSize / 2, subMaxSize / 2);
+	          subBoardRenderer4.setBoardLength(subMaxSize / 2, subMaxSize / 2);
+	         // subBoardRenderer4.setupSizeParameters();
+	          subBoardRenderer4.draw(g);
+
+	          subBoardLengthmouse = subMaxSize;
+
+	          int trueWidth = width - leftInset - rightInset - subMaxSize;
+	          int trueHeight = height - topInset - bottomInset;
+
+	          boolean isWidth = trueWidth * 0.72 > trueHeight;
+	          if (isWidth) {
+	            maxSize = (int) (min(trueWidth, trueHeight));
+	            maxSize = max(maxSize, max(Board.boardWidth, Board.boardHeight) + 5);
+	            boardX = width - maxSize; // ) / 8 * BoardPositionProportion;
+	            boardY = trueHeight - maxSize;
+	            boardRenderer.setLocation(boardX, boardY);
+	            boardRenderer.setBoardLength(maxSize, maxSize);
+	            boardRenderer.setupSizeParameters();
+	            boardRenderer.draw(g);
+
+	            int vh = trueHeight;
+	            int vw = boardX - subMaxSize;
+	            int vx = subMaxSize;
+	            int vy = 0;
+	            if (!noVariation) {
+	              if (!noCommentAndListPane) {
+	                if (noWinrate && noBasic) {
+	                  createVarTreeImage(vx, vy + vh, vw, vh / 2, g);
+	                  if (noComment) setListScrollpane(vx, vy + vh / 2, vw, vh / 2);
+	                  else if (noListPane) drawComment(g, vx, vy + vh / 2, vw, vh / 2);
+	                } else {
+	                  createVarTreeImage(vx, vy + vh / 2, vw, vh / 4, g);
+	                  if (noComment) setListScrollpane(vx, vy + vh * 3 / 4, vw, vh / 4);
+	                  else if (noListPane) drawComment(g, vx, vy + vh * 3 / 4, vw, vh / 4);
+	                }
+	              } else {
+	                if (noWinrate && noBasic) {
+	                  createVarTreeImage(vx, vy, vw, vh, g);
+	                } else {
+	                  createVarTreeImage(vx, vy + vh / 2, vw, vh / 2, g);
+	                }
+	              }
+	              // drawComment(g, cx, cy, cw, ch);
+	              //  variationTree.drawsmall(g, treex, treey, treew, treeh);
+	            } else if (!noCommentAndListPane) {
+	              if (noComment) setListScrollpane(vx, vy + vh / 2, vw, vh / 2);
+	              else if (noListPane) drawComment(g, vx, vy + vh / 2, vw, vh / 2);
+	            }
+	            if (!noWinrate) {
+	              if (!noBasic) {
+	                grw = vw;
+	                grx = vx;
+	                gry = vy + vh / 4;
+	                grh = vh / 4;
+	                drawWinratePaneInfo(grx, gry, grw, grh);
+	                // winrateGraph.draw(g, grx, gry, grw, grh);
+	                statx = vx;
+	                staty = vy;
+	                statw = vw;
+	                stath = vh / 4;
+	                drawMoveStatistics(g, statx, staty + stath / 2, statw, stath / 2);
+	                drawCaptured(g, statx, staty, statw, stath / 2, true);
+	              } else {
+	                grw = vw;
+	                grx = vx;
+	                gry = vy;
+	                grh = vh / 2;
+	                drawWinratePaneInfo(grx, gry, grw, grh);
+	                // winrateGraph.draw(g, grx, gry, grw, grh);
+	              }
+	            } else if (!noBasic) {
+	              statx = vx;
+	              staty = vy;
+	              statw = vw;
+	              stath = vh / 2;
+	              drawMoveStatistics(g, statx, staty + stath / 2, statw, stath / 2);
+	              drawCaptured(g, statx, staty, statw, stath / 2, true);
+	            }
+
+	          } else {
+
+	            maxSize = (int) (min(trueWidth, 0.77 * trueHeight));
+	            maxSize = max(maxSize, max(Board.boardWidth, Board.boardHeight) + 5);
+	            boardX = subMaxSize; // ) / 8 * BoardPositionProportion;
+	            boardY = trueHeight - maxSize;
+	            boardRenderer.setLocation(boardX, boardY);
+	            boardRenderer.setBoardLength(maxSize, maxSize);
+	            boardRenderer.setupSizeParameters();
+	            boardRenderer.draw(g);
+
+	            int vx = boardX;
+	            int vy = 0;
+	            int vw = trueWidth;
+	            int vh = boardY;
+
+	            if (!noVariation) {
+	              if (noWinrate && noBasic) {
+	                if (!noCommentAndListPane) {
+	                  if (noComment) setListScrollpane(vx, vy, vw / 2, vh);
+	                  else if (noListPane) drawComment(g, vx, vy, vw / 2, vh);
+	                  createVarTreeImage(vx + vw / 2, vy, vw / 2, vh, g);
+	                } else createVarTreeImage(vx, vy, vw, vh, g);
+	              } else {
+	                if (!noCommentAndListPane) {
+	                  if (noComment) setListScrollpane(vx, vy + vh / 2, vw / 2, vh / 2);
+	                  else if (noListPane) drawComment(g, vx, vy + vh / 2, vw / 2, vh / 2);
+	                  createVarTreeImage(vx + vw / 2, vy + vh / 2, vw / 2, vh / 2, g);
+	                } else createVarTreeImage(vx, vy + vh / 2, vw, vh / 2, g);
+	              }
+	            } else if (noWinrate && noBasic) {
+	              if (noComment) setListScrollpane(vx, vy, vw, vh);
+	              else if (noListPane) drawComment(g, vx, vy, vw, vh);
+	            } else {
+	              if (!noCommentAndListPane) {
+	                if (noComment) setListScrollpane(vx, vy + vh / 2, vw, vh / 2);
+	                else if (noListPane) drawComment(g, vx, vy + vh / 2, vw, vh / 2);
+	              }
+	            }
+
+	            if (!noWinrate) {
+	              if (noCommentAndListPane && noVariation) {
+
+	                if (!noBasic) {
+	                  grx = vx + vw / 2;
+	                  gry = vy;
+	                  grw = vw / 2;
+	                  grh = vh;
+	                  drawWinratePaneInfo(grx, gry, grw, grh);
+	                  // winrateGraph.draw(g, grx, gry, grw, grh);
+	                  statx = vx;
+	                  staty = vy;
+	                  statw = vw / 2;
+	                  stath = vh;
+	                  drawCaptured(g, statx, staty, statw, stath / 2, true);
+	                  drawMoveStatistics(g, statx, staty + stath / 2, statw, stath / 2);
+	                } else {
+	                  grx = vx;
+	                  gry = vy;
+	                  grw = vw;
+	                  grh = vh;
+	                  drawWinratePaneInfo(grx, gry, grw, grh);
+	                  // winrateGraph.draw(g, grx, gry, grw, grh);
+	                }
+
+	              } else {
+	                if (!noBasic) {
+	                  grx = vx + vw / 2;
+	                  gry = vy;
+	                  grw = vw / 2;
+	                  grh = vh / 2;
+	                  drawWinratePaneInfo(grx, gry, grw, grh);
+	                  // winrateGraph.draw(g, grx, gry, grw, grh);
+	                  statx = vx;
+	                  staty = vy;
+	                  statw = vw / 2;
+	                  stath = vh / 2;
+	                  drawCaptured(g, statx, staty, statw, stath / 2, true);
+	                  drawMoveStatistics(g, statx, staty + stath / 2, statw, stath / 2);
+	                } else {
+	                  grx = vx;
+	                  gry = vy;
+	                  grw = vw;
+	                  grh = vh / 2;
+	                  drawWinratePaneInfo(grx, gry, grw, grh);
+	                }
+	              }
+	            } else if (!noBasic) {
+
+	              if (noCommentAndListPane && noVariation) {
+	                statx = vx;
+	                staty = vy;
+	                statw = vw;
+	                stath = vh;
+	                drawCaptured(g, statx, staty, statw, stath / 2, true);
+	                drawMoveStatistics(g, statx, staty + stath / 2, statw, stath / 2);
+	              } else {
+	                statx = vx;
+	                staty = vy;
+	                statw = vw;
+	                stath = vh / 2;
+	                drawCaptured(g, statx, staty, statw, stath / 2, true);
+	                drawMoveStatistics(g, statx, staty + stath / 2, statw, stath / 2);
+	              }
+	            }
+	          }
+	        } else if (Lizzie.config.isDoubleEngineMode()) {
+	          int topInset = mainPanel.getInsets().top;
+	          int leftInset = mainPanel.getInsets().left;
+	          int rightInset = mainPanel.getInsets().right;
+	          int bottomInset = mainPanel.getInsets().bottom; // + this.getJMenuBar().getHeight();
+
+	          int trueWidth = width - leftInset - rightInset;
+	          int trueHeight = height - topInset - bottomInset;
+	          // board
+	          //   cachedImage = new BufferedImage(width, height, TYPE_INT_ARGB);
+	          //       Graphics2D g = (Graphics2D) cachedImage.getGraphics();
+	          //      g.setRenderingHint(RenderingHints.KEY_RENDERING,
+	          // RenderingHints.VALUE_RENDER_QUALITY);
+	          maxSize = (int) (min(trueWidth / 2, trueHeight - 20));
+	          maxSize = max(maxSize, max(Board.boardWidth, Board.boardHeight) + 5);
+	          boardX = leftInset; // (width - maxSize) / 8 * BoardPositionProportion;
+	          boardY = topInset;
+	          boardRenderer.setLocation(boardX, boardY);
+	          boardRenderer.setBoardLength(maxSize, maxSize);
+	          boardRenderer.setupSizeParameters();
+	          boardRenderer.draw(g);
+
+	          int maxSize2 = maxSize;
+	          int boardX2 = maxSize2 + leftInset; // (width - maxSize) / 8 * BoardPositionProportion;
+	          int boardY2 = topInset;
+	          boardRenderer2.setLocation(boardX2, boardY2);
+	          boardRenderer2.setBoardLength(maxSize2, maxSize2);
+	          boardRenderer2.setupSizeParameters();
+	          boardRenderer2.draw(g);
+
+	          int commentX1 = 0;
+	          int commentX2 = 0;
+
+	          String statusKey = "LizzieFrame.display." + (Lizzie.leelaz.isPondering() ? "on" : "off");
+	          String statusText =
+	              Lizzie.resourceBundle.getString(statusKey)
+	                  + (Lizzie.config.userKnownX
+	                      ? ""
+	                      : Lizzie.resourceBundle.getString("LizzieFrame.display.space"));
+	          String ponderingText = Lizzie.resourceBundle.getString("LizzieFrame.display.pondering");
+	          // String switching =Lizzie.resourceBundle.getString("LizzieFrame.prompt.switching");
+	          //   String switchingText =
+	          //       !Lizzie.leelaz.isLoaded()&&!Lizzie.leelaz.isNormalEnd ?
+	          // Lizzie.resourceBundle.getString("LizzieFrame.loading") : "";
+	          weightText = Lizzie.leelaz.oriEnginename;
+	          if (weightText.length() > 15) weightText = weightText.substring(0, 10);
+	          String text1 =
+	              Lizzie.resourceBundle.getString("LizzieFrame.mainEngine")
+	                  + weightText
+	                  + " "
+	                  + ponderingText
+	                  + " "
+	                  + statusText;
+	          // + " "
+	          //  + switchingText;
+
+	          commentX1 = drawPonderingStateForExtraMode2(g, text1, leftInset, maxSize, 18);
+	          if (Lizzie.leelaz2 != null) {
+	            weightText2 = Lizzie.leelaz2.oriEnginename;
+	            String statusKey2 =
+	                "LizzieFrame.display." + (Lizzie.leelaz.isPondering() ? "on" : "off");
+	            String statusText2 = Lizzie.resourceBundle.getString(statusKey2);
+	            String ponderingText2 =
+	                Lizzie.resourceBundle.getString("LizzieFrame.display.pondering");
+	            //    String switching2
+	            // =Lizzie.resourceBundle.getString("LizzieFrame.prompt.switching");
+	            // String switchingText2 =
+	            //		  !Lizzie.leelaz2.isLoaded()&&!Lizzie.leelaz2.isNormalEnd ?
+	            // Lizzie.resourceBundle.getString("LizzieFrame.loading") : "";
+	            // String weightText2 = Lizzie.leelaz2.currentEnginename;
+	            if (weightText2.length() > 15) weightText2 = weightText2.substring(0, 10);
+	            String text2 =
+	                Lizzie.resourceBundle.getString("LizzieFrame.subEngine")
+	                    + weightText2
+	                    + " "
+	                    + ponderingText2
+	                    + " "
+	                    + statusText2;
+	            //     + " "
+	            //     + switchingText2;
+	            commentX2 = drawPonderingStateForExtraMode2(g, text2, maxSize, maxSize, 18);
+	          } else {
+	            String text2 = Lizzie.resourceBundle.getString("LizzieFrame.subEngine") + weightText2;
+	            commentX2 = drawPonderingStateForExtraMode2(g, text2, maxSize, maxSize, 18);
+	          }
+	          // if (Lizzie.leelaz != null) {
+	          // WinrateStats stats = Lizzie.leelaz.getWinrateStats();
+	          //  if (stats.maxWinrate > 0) {
+	          //   extraModeWinrate1 = stats.maxWinrate;
+	          //  }
+	          String text1comm =
+	              Lizzie.resourceBundle.getString("LizzieFrame.visits")
+	                  + Utils.getPlayoutsString(Lizzie.board.getData().getPlayouts())
+	                  + " "
+	                  + Lizzie.resourceBundle.getString("LizzieFrame.winrate")
+	                  + String.format(Locale.ENGLISH, "%.1f%%", Lizzie.board.getData().winrate);
+	          drawPonderingStateForExtraMode2(g, text1comm, leftInset + commentX1 + 5, maxSize, 18);
+	          // }
+
+	          // if (Lizzie.leelaz2 != null) {
+	          //   WinrateStats stats = Lizzie.leelaz2.getWinrateStats();
+	          //   if (stats.maxWinrate > 0) {
+	          //      extraModeWinrate2 = stats.maxWinrate;
+	          //    }
+	          String text2comm =
+	              Lizzie.resourceBundle.getString("LizzieFrame.visits")
+	                  + Utils.getPlayoutsString(Lizzie.board.getData().getPlayouts2())
+	                  + " "
+	                  + Lizzie.resourceBundle.getString("LizzieFrame.winrate")
+	                  + String.format(Locale.ENGLISH, "%.1f%%", Lizzie.board.getData().winrate2);
+	          drawPonderingStateForExtraMode2(
+	              g, text2comm, maxSize + leftInset + commentX2 + 5, maxSize, 18);
+	          //  }
+	        } else if (Lizzie.config.isThinkingMode()) {
+	          int topInset = mainPanel.getInsets().top;
+	          int leftInset = mainPanel.getInsets().left;
+	          int rightInset = mainPanel.getInsets().right;
+	          int bottomInset = mainPanel.getInsets().bottom; // + this.getJMenuBar().getHeight();
+	          // int maxBound = Math.max(width, height);
+
+	          boolean noWinrate = !Lizzie.config.showWinrateGraph;
+	          boolean noVariation = !Lizzie.config.showVariationGraph;
+	          boolean noBasic = !Lizzie.config.showCaptured;
+	          //   boolean noSubBoard = !Lizzie.config.showSubBoard;
+	          boolean noComment = !Lizzie.config.showComment || Lizzie.config.showListPane();
+	          boolean noListPane = !Lizzie.config.showListPane();
+	          boolean noCommentAndListPane = noComment && noListPane;
+
+	          // board
+	          subMaxSize = (int) (min(width - leftInset - rightInset, height - topInset - bottomInset));
+	          subMaxSize = max(subMaxSize, max(Board.boardWidth, Board.boardHeight) + 5);
+	          //         subBoardX = 0;//(width - maxSize) / 8 * BoardPositionProportion;
+	          //         subBoardY = 0;
+
+	          //  cachedImage = new BufferedImage(width, height, TYPE_INT_ARGB);
+	          // Graphics2D g = (Graphics2D) cachedImage.getGraphics();
+	          //     g.setRenderingHint(RenderingHints.KEY_RENDERING,
+	          // RenderingHints.VALUE_RENDER_QUALITY);
+
+	          // subBoardRenderer.setLocation( cx,cy);
+	          // subBoardXmouse = subBoardX;
+	          // subBoardYmouse = subBoardY;
+	          //  subBoardLengthmouse = subBoardLength;
+	          boardRenderer2.setLocation(topInset, leftInset);
+	          boardRenderer2.setBoardLength(subMaxSize, subMaxSize);
+	          boardRenderer2.setupSizeParameters();
+	          boardRenderer2.draw(g);
+
+	          //  subBoardLengthmouse = subMaxSize;
+
+	          int trueWidth = width - leftInset - rightInset - subMaxSize;
+	          int trueHeight = height - topInset - bottomInset;
+
+	          boolean isWidth = trueWidth * 0.72 > trueHeight;
+	          if (isWidth) {
+	            maxSize = (int) (min(trueWidth, trueHeight));
+	            maxSize = max(maxSize, max(Board.boardWidth, Board.boardHeight) + 5);
+	            boardX = width - maxSize; // ) / 8 * BoardPositionProportion;
+	            boardY = trueHeight - maxSize;
+	            boardRenderer.setLocation(boardX, boardY);
+	            boardRenderer.setBoardLength(maxSize, maxSize);
+	            boardRenderer.setupSizeParameters();
+	            boardRenderer.draw(g);
+
+	            int vh = trueHeight;
+	            int vw = boardX - subMaxSize;
+	            int vx = subMaxSize;
+	            int vy = 0;
+	            if (!noVariation) {
+	              if (!noCommentAndListPane) {
+	                if (noWinrate && noBasic) {
+	                  if (bufferedContainer != null) {
+	                    g.drawImage(bufferedContainer, vx, vy, null);
+	                    g.drawImage(bufferedContainer, vx, vy + vh / 2, null);
+	                  }
+	                  createVarTreeImage(vx, vy + vh, vw, vh / 2, g);
+	                  if (noComment) setListScrollpane(vx, vy + vh / 2, vw, vh / 2);
+	                  else if (noListPane) drawComment(g, vx, vy + vh / 2, vw, vh / 2);
+	                } else {
+	                  if (bufferedContainer != null) {
+	                    g.drawImage(bufferedContainer, vx, vy + vh / 2, null);
+	                  }
+	                  createVarTreeImage(vx, vy + vh / 2, vw, vh / 4, g);
+	                  if (noComment) setListScrollpane(vx, vy + vh * 3 / 4, vw, vh / 4);
+	                  else if (noListPane) drawComment(g, vx, vy + vh * 3 / 4, vw, vh / 4);
+	                }
+	              } else {
+	                if (noWinrate && noBasic) {
+	                  if (bufferedContainer != null) {
+	                    g.drawImage(bufferedContainer, vx, vy, null);
+	                    g.drawImage(bufferedContainer, vx, vy + vh / 2, null);
+	                  }
+	                  createVarTreeImage(vx, vy, vw, vh, g);
+	                } else {
+	                  if (bufferedContainer != null) {
+	                    g.drawImage(bufferedContainer, vx, vy + vh / 2, null);
+	                  }
+	                  createVarTreeImage(vx, vy + vh / 2, vw, vh / 2, g);
+	                }
+	              }
+	              // drawComment(g, cx, cy, cw, ch);
+	              //  variationTree.drawsmall(g, treex, treey, treew, treeh);
+	            } else if (!noCommentAndListPane) {
+	              if (noComment) setListScrollpane(vx, vy + vh / 2, vw, vh / 2);
+	              else if (noListPane) drawComment(g, vx, vy + vh / 2, vw, vh / 2);
+	            }
+	            if (!noWinrate) {
+	              if (bufferedContainer != null) g.drawImage(bufferedContainer, subMaxSize, 0, null);
+	              if (!noBasic) {
+	                grw = vw;
+	                grx = vx;
+	                gry = vy + vh / 4;
+	                grh = vh / 4;
+	                drawWinratePane(grx, gry, grw, grh);
+	                // winrateGraph.draw(g, grx, gry, grw, grh);
+	                statx = vx;
+	                staty = vy;
+	                statw = vw;
+	                stath = vh / 4;
+	                drawMoveStatistics(g, statx, staty + stath / 2, statw, stath / 2);
+	                drawCaptured(g, statx, staty, statw, stath / 2, true);
+	              } else {
+	                grw = vw;
+	                grx = vx;
+	                gry = vy;
+	                grh = vh / 2;
+	                drawWinratePane(grx, gry, grw, grh);
+	                // winrateGraph.draw(g, grx, gry, grw, grh);
+	              }
+	            } else if (!noBasic) {
+	              if (bufferedContainer != null) g.drawImage(bufferedContainer, subMaxSize, 0, null);
+	              statx = vx;
+	              staty = vy;
+	              statw = vw;
+	              stath = vh / 2;
+	              drawMoveStatistics(g, statx, staty + stath / 2, statw, stath / 2);
+	              drawCaptured(g, statx, staty, statw, stath / 2, true);
+	            }
+
+	          } else {
+	            maxSize = (int) (min(trueWidth, 0.77 * trueHeight));
+	            maxSize = max(maxSize, max(Board.boardWidth, Board.boardHeight) + 5);
+	            boardX = subMaxSize; // ) / 8 * BoardPositionProportion;
+	            boardY = trueHeight - maxSize;
+	            boardRenderer.setLocation(boardX, boardY);
+	            boardRenderer.setBoardLength(maxSize, maxSize);
+	            boardRenderer.setupSizeParameters();
+	            boardRenderer.draw(g);
+
+	            int vx = boardX;
+	            int vy = 0;
+	            int vw = trueWidth;
+	            int vh = boardY;
+
+	            //        if (backgroundG.isPresent()) {
+	            //          drawContainer(
+	            //              backgroundG.get(), vx, vy, vw, vh);
+	            //        }
+	            if (!noVariation) {
+	              if (noWinrate && noBasic) {
+	                if (bufferedContainer != null) {
+	                  g.drawImage(bufferedContainer, vx, vy, null);
+	                  g.drawImage(bufferedContainer, vx, vy + vh / 2, null);
+	                }
+	                if (!noCommentAndListPane) {
+	                  if (noComment) setListScrollpane(vx, vy, vw / 2, vh);
+	                  else if (noListPane) drawComment(g, vx, vy, vw / 2, vh);
+	                  createVarTreeImage(vx + vw / 2, vy, vw / 2, vh, g);
+	                } else {
+	                  // variationTree.drawsmall(g, vx, vy, vw, vh);//这里
+	                  createVarTreeImage(vx, vy, vw, vh, g);
+	                }
+	              } else {
+	                if (bufferedContainer != null)
+	                  g.drawImage(bufferedContainer, vx, vy + vh / 2, null);
+	                if (!noCommentAndListPane) {
+	                  if (noComment) setListScrollpane(vx, vy + vh / 2, vw / 2, vh / 2);
+	                  else if (noListPane) drawComment(g, vx, vy + vh / 2, vw / 2, vh / 2);
+	                  createVarTreeImage(vx + vw / 2, vy + vh / 2, vw / 2, vh / 2, g);
+	                } else createVarTreeImage(vx, vy + vh / 2, vw, vh / 2, g);
+	              }
+	            } else if (noWinrate && noBasic) {
+	              if (bufferedContainer != null) {
+	                g.drawImage(bufferedContainer, vx, vy, null);
+	                g.drawImage(bufferedContainer, vx, vy + vh / 2, null);
+	              }
+	              if (noComment) setListScrollpane(vx, vy, vw, vh);
+	              else if (noListPane) drawComment(g, vx, vy, vw, vh);
+	            } else {
+	              if (!noCommentAndListPane) {
+	                if (bufferedContainer != null)
+	                  g.drawImage(bufferedContainer, vx, vy + vh / 2, null);
+	                if (noComment) setListScrollpane(vx, vy + vh / 2, vw, vh / 2);
+	                else if (noListPane) drawComment(g, vx, vy + vh / 2, vw, vh / 2);
+	              }
+	            }
+
+	            if (!noWinrate) {
+	              if (noCommentAndListPane && noVariation) {
+	                if (bufferedContainer != null) {
+	                  g.drawImage(bufferedContainer, vx, vy, null);
+	                  g.drawImage(bufferedContainer, vx, vy + vh / 2, null);
+	                }
+
+	                if (!noBasic) {
+	                  grx = vx + vw / 2;
+	                  gry = vy;
+	                  grw = vw / 2;
+	                  grh = vh;
+	                  drawWinratePane(grx, gry, grw, grh);
+	                  // winrateGraph.draw(g, grx, gry, grw, grh);
+	                  statx = vx;
+	                  staty = vy;
+	                  statw = vw / 2;
+	                  stath = vh;
+	                  drawCaptured(g, statx, staty, statw, stath / 2, true);
+	                  drawMoveStatistics(g, statx, staty + stath / 2, statw, stath / 2);
+	                } else {
+	                  grx = vx;
+	                  gry = vy;
+	                  grw = vw;
+	                  grh = vh;
+	                  drawWinratePane(grx, gry, grw, grh);
+	                  // winrateGraph.draw(g, grx, gry, grw, grh);
+	                }
+
+	              } else {
+	                if (bufferedContainer != null) g.drawImage(bufferedContainer, vx, vy, null);
+	                if (!noBasic) {
+	                  grx = vx + vw / 2;
+	                  gry = vy;
+	                  grw = vw / 2;
+	                  grh = vh / 2;
+	                  drawWinratePane(grx, gry, grw, grh);
+	                  // winrateGraph.draw(g, grx, gry, grw, grh);
+	                  statx = vx;
+	                  staty = vy;
+	                  statw = vw / 2;
+	                  stath = vh / 2;
+	                  drawCaptured(g, statx, staty, statw, stath / 2, true);
+	                  drawMoveStatistics(g, statx, staty + stath / 2, statw, stath / 2);
+	                } else {
+	                  grx = vx;
+	                  gry = vy;
+	                  grw = vw;
+	                  grh = vh / 2;
+	                  drawWinratePane(grx, gry, grw, grh);
+	                  // winrateGraph.draw(g, grx, gry, grw, grh);
+	                }
+	              }
+	            } else if (!noBasic) {
+
+	              if (noCommentAndListPane && noVariation) {
+	                if (bufferedContainer != null) {
+	                  g.drawImage(bufferedContainer, vx, vy, null);
+	                  g.drawImage(bufferedContainer, vx, vy + vh / 2, null);
+	                }
+	                statx = vx;
+	                staty = vy;
+	                statw = vw;
+	                stath = vh;
+	                drawCaptured(g, statx, staty, statw, stath / 2, true);
+	                drawMoveStatistics(g, statx, staty + stath / 2, statw, stath / 2);
+	              } else {
+	                if (bufferedContainer != null) g.drawImage(bufferedContainer, vx, vy, null);
+	                statx = vx;
+	                staty = vy;
+	                statw = vw;
+	                stath = vh / 2;
+	                drawCaptured(g, statx, staty, statw, stath / 2, true);
+	                drawMoveStatistics(g, statx, staty + stath / 2, statw, stath / 2);
+	              }
+	            }
+	          }
+	        }
+	        //  extrmode 8
+	        else if (Lizzie.config.isFloatBoardMode()) // 8浮动棋盘模式
+	        {
+	          int topInset = mainPanel.getInsets().top;
+	          int leftInset = mainPanel.getInsets().left;
+	          int rightInset = mainPanel.getInsets().right;
+	          int bottomInset = mainPanel.getInsets().bottom;
+
+	          boolean noBasic = !Lizzie.config.showCaptured;
+	          boolean noWinrate = !Lizzie.config.showWinrateGraph;
+	          boolean noComment = !Lizzie.config.showComment;
+
+	          boolean noVariation = !Lizzie.config.showVariationGraph;
+	          boolean noListPane = !Lizzie.config.showListPane();
+	          boolean noSubBoard = !Lizzie.config.showSubBoard;
+
+	          int trueWidth = width - leftInset - rightInset;
+	          int trueHeight = height - topInset - bottomInset;
+
+	          int vh = trueHeight;
+	          int vw = trueWidth / 8 * BoardPositionProportion;
+	          if (noVariation && noListPane && noSubBoard) vw = trueWidth;
+	          int vx = 0;
+	          int vy = 0;
+	          if (this.independentMainBoard != null)
+	            LizzieFrame.boardRenderer = independentMainBoard.boardRenderer;
+	          int maxBound = Math.max(width, height);
+	          int ponderingX = leftInset;
+	          double ponderingSize = Lizzie.config.userKnownX ? 0.025 : 0.04;
+	          maxSize = (int) (min(width - leftInset - rightInset, height - topInset - bottomInset));
+
+	          int ponderingY =
+	              height - bottomInset; // - (int) (maxSize * 0.023) - (int) (maxBound * ponderingSize);
+	          int ponderingY2 =
+	              height - bottomInset; // - (int) (maxSize * 0.023) - (int) (maxBound * ponderingSize *
+	          // 0.4);
+	          if (Lizzie.config.showStatus) {
+	            ponderingY = ponderingY - (int) (maxSize * 0.023) - (int) (maxBound * ponderingSize);
+	            ponderingY2 =
+	                ponderingY2
+	                    - (int) (maxSize * 0.023)
+	                    - (int) (maxBound * ponderingSize * (Lizzie.config.userKnownX ? 0.3 : 0.4));
+	          }
+	          double loadingSize = 0.03;
+	          int loadingX = ponderingX;
+	          int loadingY =
+	              ponderingY
+	                  - (int)
+	                      (maxBound
+	                          * (loadingSize
+	                              - ponderingSize * (Lizzie.config.userKnownX ? 1.15 : 0.75)));
+	          g.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+	          if (Lizzie.config.showStatus && !Lizzie.config.userKnownX) drawCommandString(g);
+	          if (Lizzie.config.showStatus) {
+	            if (Lizzie.leelaz != null && (Lizzie.leelaz.isLoaded() || Lizzie.leelaz.isNormalEnd)) {
+	              String statusKey =
+	                  "LizzieFrame.display." + (Lizzie.leelaz.isPondering() ? "on" : "off");
+	              String statusText =
+	                  Lizzie.resourceBundle.getString(statusKey)
+	                      + (Lizzie.config.userKnownX
+	                          ? ""
+	                          : Lizzie.resourceBundle.getString("LizzieFrame.display.space"));
+	              String ponderingText =
+	                  Lizzie.resourceBundle.getString("LizzieFrame.display.pondering");
+	              //            String switching =
+	              // Lizzie.resourceBundle.getString("LizzieFrame.prompt.switching");
+	              //            String switchingText = Lizzie.leelaz.switching() ? switching : "";
+	              String weightText = "";
+	              if (EngineManager.isEmpty)
+	                weightText = Lizzie.resourceBundle.getString("LizzieFrame.noEngineText");
+	              else weightText = Lizzie.leelaz.oriEnginename;
+	              String text2 = ponderingText + " " + statusText; // + " " + switchingText;
+	              drawPonderingState(
+	                  g, weightText, text2, ponderingX, ponderingY, ponderingY2, ponderingSize);
+	              vh = ponderingY;
+	            } else {
+	              String loadingText = getLoadingText();
+	              drawPonderingState(g, loadingText, loadingX, loadingY, loadingSize);
+	              vh = loadingY;
+	            }
+	          }
+	          if (!noBasic) {
+	            if (noComment && noWinrate) {
+	              statx = vx;
+	              staty = vy;
+	              statw = vw;
+	              stath = vh;
+	              drawMoveStatistics(g, statx, staty + stath / 2, statw, stath / 2);
+	              drawCaptured(g, statx, staty, statw, stath / 2, false);
+	            } else if (noComment || noWinrate) {
+	              statx = vx;
+	              staty = vy;
+	              statw = vw;
+	              stath = vh / 2;
+	              drawMoveStatistics(g, statx, staty + stath / 2, statw, stath / 2);
+	              drawCaptured(g, statx, staty, statw, stath / 2, false);
+	            } else {
+	              statx = vx;
+	              staty = vy;
+	              statw = vw;
+	              stath = vh / 3;
+	              drawMoveStatistics(g, statx, staty + stath / 2, statw, stath / 2);
+	              drawCaptured(g, statx, staty, statw, stath / 2, false);
+	            }
+	          }
+
+	          if (!noWinrate) {
+	            if (noComment && noBasic) {
+	              grw = vw;
+	              grx = vx;
+	              gry = vy;
+	              grh = vh;
+	            } else if (noComment || noBasic) {
+	              if (noComment) {
+	                grw = vw;
+	                grx = vx;
+	                gry = vy + vh / 2;
+	                grh = vh / 2;
+	              } else {
+	                grw = vw;
+	                grx = vx;
+	                gry = vy;
+	                grh = vh / 2;
+	              }
+	            } else {
+	              grw = vw;
+	              grx = vx;
+	              gry = vy + vh / 3;
+	              grh = vh / 3;
+	            }
+	          }
+
+	          if (!noComment) {
+	            if (noWinrate && noBasic) drawComment(g, vx, vy, vw, vh);
+	            else if (noWinrate || noBasic) drawComment(g, vx, vy + vh / 2, vw, vh / 2);
+	            else drawComment(g, vx, vy + vh * 2 / 3, vw, vh * 1 / 3);
+	          }
+
+	          vh = trueHeight;
+	          if (noBasic && noWinrate && noComment) vw = trueWidth;
+	          else vw = trueWidth - trueWidth / 8 * BoardPositionProportion;
+	          vx = trueWidth - vw;
+	          vy = 0;
+
+	          int subBoardLength = 0;
+	          if (!noSubBoard) {
+	            int subBoardX = 0;
+	            int subBoardY = 0;
+	            if (noSubBoard && noVariation) {
+	              subBoardX = vx;
+	              subBoardY = vy;
+	              subBoardLength = Math.min(vw, vh);
+	            } else {
+	              subBoardX = vx;
+	              subBoardLength = Math.min(vw, vh * 3 / 4);
+	              subBoardY = vh - subBoardLength;
+	            }
+	            subBoardRenderer.setLocation(subBoardX, subBoardY);
+	            subBoardRenderer.setBoardLength(subBoardLength, subBoardLength);
+
+	            subBoardXmouse = subBoardX;
+	            subBoardYmouse = subBoardY;
+	            subBoardLengthmouse = subBoardLength;
+	            subBoardRenderer.setupSizeParameters();
+	            subBoardRenderer.draw(g);
+	          }
+
+	          if (!noVariation) {
+	            if (noSubBoard) {
+	              if (noListPane) {
+	                createVarTreeImage(vx, vy, vw, vh, g);
+	              } else {
+	                createVarTreeImage(vx, vy, vw, vh / 2, g);
+	              }
+	            } else {
+	              if (noListPane) {
+	                createVarTreeImage(vx, vy, vw, vh - subBoardLength, g);
+	              } else {
+	                createVarTreeImage(vx, vy, vw, (vh - subBoardLength) / 2, g);
+	              }
+	            }
+	          }
+
+	          if (!noListPane) {
+	            if (noSubBoard) {
+	              if (noVariation) {
+	                setListScrollpane(vx, vy, vw, vh);
+	              } else {
+	                setListScrollpane(vx, vy + vh / 2, vw, vh / 2);
+	              }
+	            } else {
+	              if (noVariation) {
+	                setListScrollpane(vx, vy, vw, vh - subBoardLength);
+	              } else {
+	                setListScrollpane(
+	                    vx, vy + (vh - subBoardLength) / 2, vw, (vh - subBoardLength) / 2);
+	              }
+	            }
+	          }
+	          if (!noWinrate) {
+	            drawWinratePane(grx, gry, grw, grh);
+	          }
+	        } else {
+	          // layout parameters
+
+	          int topInset = mainPanel.getInsets().top;
+	          int leftInset = mainPanel.getInsets().left;
+	          int rightInset = mainPanel.getInsets().right;
+	          int bottomInset = mainPanel.getInsets().bottom; // + this.getJMenuBar().getHeight();
+	          int maxBound = Math.max(width, height);
+
+	          //      boolean noWinrate = !Lizzie.config.showWinrate;
+	          boolean showListPane = Lizzie.config.showListPane();
+	          boolean noVariation = !Lizzie.config.showVariationGraph && !showListPane;
+	          //  boolean noBasic = !Lizzie.config.showCaptured;
+	          boolean noSubBoard = !Lizzie.config.showSubBoard;
+	          boolean noComment = !Lizzie.config.showComment;
+	          boolean isLargeSubboard =
+	              Lizzie.config.showLargeSubBoard() && !Lizzie.config.largeWinrateGraph;
+	          // board
+	          maxSize = (int) (min(width - leftInset - rightInset, height - topInset - bottomInset));
+	          maxSize = max(maxSize, max(Board.boardWidth, Board.boardHeight) + 5);
+	          boardX = (width - maxSize) / 8 * BoardPositionProportion;
+	          boardY = topInset + (height - topInset - bottomInset - maxSize) / 2;
+
+	          int panelMargin = (int) (maxSize * 0.02);
+
+	          // captured stones
+	          int capx = leftInset;
+	          int capy = topInset;
+	          int capw = boardX - panelMargin - leftInset;
+	          int caph = boardY + maxSize / 8 - topInset;
+
+	          // move statistics (winrate bar)
+	          // boardX equals width of space on each side
+	          statx = capx;
+	          staty = capy + caph;
+	          statw = capw;
+	          stath = maxSize / 10;
+
+	          // winrate graph
+	          grx = statx;
+	          gry = staty + stath;
+	          grw = statw;
+	          grh = maxSize / 3;
+
+	          // variation tree container
+	          int vx = boardX + maxSize + panelMargin;
+	          int vy = capy;
+	          int vw = width - vx - rightInset;
+	          int vh = height - vy - bottomInset;
+
+	          // pondering message
+	          double ponderingSize = Lizzie.config.userKnownX ? 0.025 : 0.04;
+	          int ponderingX = leftInset;
+
+	          int ponderingY =
+	              height - bottomInset; // - (int) (maxSize * 0.023) - (int) (maxBound * ponderingSize);
+	          int ponderingY2 =
+	              height - bottomInset; // - (int) (maxSize * 0.023) - (int) (maxBound * ponderingSize *
+	          // 0.4);
+	          if (Lizzie.config.showStatus) {
+	            ponderingY = ponderingY - (int) (maxSize * 0.023) - (int) (maxBound * ponderingSize);
+	            ponderingY2 =
+	                ponderingY2
+	                    - (int) (maxSize * 0.023)
+	                    - (int) (maxBound * ponderingSize * (Lizzie.config.userKnownX ? 0.3 : 0.4));
+	          }
+	          // dynamic komi
+	          // double dynamicKomiSize = .02;
+	          // int dynamicKomiX = leftInset;
+	          // int dynamicKomiY = ponderingY - (int) (maxBound * dynamicKomiSize);
+	          // int dynamicKomiLabelX = leftInset;
+	          // int dynamicKomiLabelY = dynamicKomiY - (int) (maxBound * dynamicKomiSize);
+
+	          // loading message;
+	          double loadingSize = 0.03;
+	          int loadingX = ponderingX;
+	          int loadingY =
+	              ponderingY
+	                  - (int)
+	                      (maxBound
+	                          * (loadingSize
+	                              - ponderingSize * (Lizzie.config.userKnownX ? 1.15 : 0.75)));
+
+	          // subboard
+	          int subBoardY = gry + grh;
+	          int subBoardWidth = grw;
+	          int subBoardHeight = ponderingY - subBoardY;
+	          int subBoardLength = min(subBoardWidth, subBoardHeight);
+	          int subBoardX = statx + (statw - subBoardLength) / 2;
+	          boolean isWidthMode = width >= height;
+
+	          if (isWidthMode) {
+	            // Landscape mode
+	            if (Lizzie.config.showLargeSubBoard()) {
+	              boardX = width - maxSize - panelMargin;
+	              int spaceW = boardX - panelMargin - leftInset;
+	              int spaceH = height - topInset - bottomInset;
+	              int panelW = spaceW / 2;
+	              int panelH = spaceH * 2 / 7;
+
+	              // captured stones
+	              capw = (noVariation && noComment) ? spaceW : panelW;
+	              caph = (int) (panelH * 0.2);
+	              // move statistics (winrate bar)
+	              staty = capy + caph;
+	              statw = capw;
+	              stath = (int) (panelH * 0.33);
+	              // winrate graph
+	              gry = staty + stath;
+	              grw = spaceW;
+	              grh = panelH - caph - stath;
+	              //              if (noComment && !Lizzie.config.showVariationGraph) {
+	              //                grw = grw * 2;
+	              //              }
+	              // variation tree container
+	              vx = statx + statw;
+	              vw = panelW;
+	              vh = stath + caph;
+	              // subboard
+	              subBoardY = gry + grh;
+	              subBoardWidth = spaceW;
+	              subBoardHeight = ponderingY - subBoardY;
+	              subBoardLength = Math.min(subBoardWidth, subBoardHeight);
+	              if (subBoardHeight > subBoardWidth) {
+	                subBoardY = subBoardY + subBoardHeight - subBoardWidth;
+	                panelH = spaceH * 2 / 7 + (subBoardHeight - subBoardWidth);
+	                caph = (int) (panelH * 0.2);
+	                staty = capy + caph;
+	                stath = (int) (panelH * 0.33);
+	                gry = staty + stath;
+	                // staty=staty+(subBoardHeight-subBoardWidth);
+	                grh = panelH - caph - stath;
+	                vh = stath + caph;
+	              }
+	              subBoardX = statx + (spaceW - subBoardLength) / 2;
+	              isSmallCap = true;
+	            } else if (Lizzie.config.showLargeWinrate()) {
+	              boardX = width - maxSize - panelMargin;
+	              int spaceW = boardX - panelMargin - leftInset;
+	              int spaceH = height - topInset - bottomInset;
+	              int panelW = spaceW / 2;
+	              int panelH = spaceH / 4;
+
+	              // captured stones
+	              capy = topInset + panelH + 1;
+	              capw = spaceW;
+	              caph = (int) ((ponderingY - topInset - panelH) * 0.15);
+	              // move statistics (winrate bar)
+	              staty = capy + caph;
+	              statw = capw;
+	              stath = caph;
+	              // winrate graph
+	              gry = staty + stath;
+	              grw = statw;
+	              grh = ponderingY - gry;
+	              // variation tree container
+	              vx = leftInset + panelW;
+	              vw = panelW;
+	              vh = panelH;
+	              // subboard
+	              subBoardY = topInset;
+	              subBoardWidth = panelW - leftInset;
+	              subBoardHeight = panelH;
+	              subBoardLength = Math.min(subBoardWidth, subBoardHeight);
+	              subBoardX = statx + (vw - subBoardLength) / 2;
+	            }
+
+	            // graph container
+	            int contx = statx;
+	            int conty = staty;
+	            int contw = statw;
+	            int conth = stath + grh;
+	            // variation tree
+	            //            if (!Lizzie.config.showWinrateGraph &&
+	            // (Lizzie.config.showLargeSubBoard())) {
+	            //              vh = vh + grh;
+	            //            }
+	            int treex = vx;
+	            int treey = vy;
+	            int treew = vw;
+	            int treeh = vh;
+
+	            // comment panel
+	            int cx = vx, cy = vy, cw = vw, ch = vh;
+	            if (Lizzie.config.showComment) {
+	              if (Lizzie.config.showVariationGraph || showListPane) {
+	                treeh = vh / 2;
+	                cy = vy + treeh;
+	                ch = treeh;
+	              }
+
+	              if (!Lizzie.config.showLargeSubBoard()) {
+	                int tempx = cx;
+	                int tempy = cy;
+	                int tempw = cw;
+	                int temph = ch;
+	                if (subBoardWidth > subBoardHeight) {
+	                  cx = subBoardX - (subBoardWidth - subBoardHeight) / 2;
+	                } else {
+	                  cx = subBoardX;
+	                }
+	                cy = subBoardY;
+	                cw = subBoardWidth;
+	                ch = subBoardHeight;
+	                subBoardX = tempx;
+	                subBoardY = tempy;
+	                subBoardLength = Math.min(tempw, temph);
+	              }
+	              // super.paintComponents(g0);
+	            }
+
+	            // initialize
+
+	            //    cachedImage = new BufferedImage(width, height, TYPE_INT_ARGB);
+	            //     Graphics2D g = (Graphics2D) cachedImage.getGraphics();
+	            //     g.setRenderingHint(RenderingHints.KEY_RENDERING,
+	            // RenderingHints.VALUE_RENDER_QUALITY);
+
+	            if (Lizzie.config.showStatus && !Lizzie.config.isMinMode() && !Lizzie.config.userKnownX)
+	              drawCommandString(g);
+	            //
+	            //          if (boardPos != boardX + maxSize / 2) {
+	            //            boardPos = boardX + maxSize / 2;
+	            //            //   toolbar.setButtonLocation((int) (boardPos - 22));
+	            //          }
+	            if (Lizzie.config.showWinrateGraph) {
+	              if (Lizzie.config.showLargeSubBoard()
+	                  && noComment
+	                  && noVariation
+	                  && noVariation
+	                  && !showListPane
+	                  && !Lizzie.config.showCaptured) {
+	                staty -= caph;
+	              }
+	              drawMoveStatistics(g, statx, staty, statw, stath);
+	            }
+	            boardRenderer.setLocation(boardX, boardY);
+	            boardRenderer.setBoardLength(maxSize, maxSize);
+	            boardRenderer.setupSizeParameters();
+	            boardRenderer.draw(g);
+	            if (!Lizzie.config.showLargeSubBoard() && !Lizzie.config.showLargeWinrate()) {
+	              // treeh = vh/2;
+	              if (Lizzie.config.showSubBoard && Lizzie.config.showComment) {
+	                treeh = treeh + vh / 2 - subBoardLength;
+	                if (noVariation) subBoardY = subBoardY + vh - subBoardLength;
+	                else subBoardY = subBoardY + vh / 2 - subBoardLength;
+	              }
+	            }
+	         
+	            if (Lizzie.config.showStatus && !Lizzie.config.isMinMode()) {
+	              if (Lizzie.leelaz != null
+	                  && (Lizzie.leelaz.isLoaded() || Lizzie.leelaz.isNormalEnd)) {
+	                String statusKey =
+	                    "LizzieFrame.display." + (Lizzie.leelaz.isPondering() ? "on" : "off");
+	                String statusText =
+	                    Lizzie.resourceBundle.getString(statusKey)
+	                        + (Lizzie.config.userKnownX
+	                            ? ""
+	                            : Lizzie.resourceBundle.getString("LizzieFrame.display.space"));
+	                String ponderingText =
+	                    Lizzie.resourceBundle.getString("LizzieFrame.display.pondering");
+	                String weightText = "";
+	                if (EngineManager.isEmpty)
+	                  weightText = Lizzie.resourceBundle.getString("LizzieFrame.noEngineText");
+	                else weightText = Lizzie.leelaz.oriEnginename;
+	                String text2 = ponderingText + " " + statusText; // + " " + switchingText;
+	                drawPonderingState(
+	                    g, weightText, text2, ponderingX, ponderingY, ponderingY2, ponderingSize);
+	              } else {
+	                String loadingText = getLoadingText();
+	                drawPonderingState(g, loadingText, loadingX, loadingY, loadingSize);
+	              }
+	            }
+	            
+	            if (Lizzie.config.showCaptured) {
+	              if (Lizzie.config.showLargeSubBoard()
+	                  && !noSubBoard
+	                  && !Lizzie.config.showWinrateGraph)
+	                drawCaptured(g, capx, capy, capw, treeh, isSmallCap);
+	              else drawCaptured(g, capx, capy, capw, caph, isSmallCap);
+	            }
+
+	            if (Lizzie.config.showVariationGraph || showListPane || Lizzie.config.showComment) {
+	              if (Lizzie.config.showVariationGraph || showListPane) {
+	                if (!Lizzie.config.showLargeSubBoard() && !Lizzie.config.showLargeWinrate()) {
+	                  if ((Lizzie.config.showSubBoard && !Lizzie.config.showComment)) treeh = vh;
+	                }
+	                if (!Lizzie.config.showSubBoard && Lizzie.config.showComment) treeh = vh;
+
+	                if (showListPane && !isLargeSubboard) {
+	                  if (Lizzie.config.showVariationGraph) {
+	                    treeh = treeh / 2;
+	                    setListScrollpane(treex, treey + treeh, treew, treeh);
+	                  } else {
+	                    setListScrollpane(treex, treey, treew, treeh);
+	                  }
+	                }
+	                if ((Lizzie.config.showLargeSubBoard() || Lizzie.config.showLargeWinrate())
+	                    && !Lizzie.config.showCaptured)
+	                  createVarTreeImage(treex - treew, treey, treew * 2, treeh, g);
+	                else createVarTreeImage(treex, treey, treew, treeh, g);
+	              }
+
+	              if (Lizzie.config.showComment) {
+	                if (Lizzie.config.showLargeSubBoard()) {
+	                  if (!noSubBoard) {
+	                    if (!Lizzie.config.showVariationGraph && showListPane) {
+	                      cy = ch; // bbb
+	                      // ch = ch * 2;
+	                    }
+	                    if (!Lizzie.config.showWinrateGraph) {
+	                      cx = cx - cw;
+	                      cw = cw * 2;
+	                    }
+	                  }
+	                }
+	                drawComment(g, cx, cy, cw, ch);
+	              }
+	            }
+	            if (Lizzie.config.showSubBoard) {
+	              try {
+
+	                subBoardRenderer.setLocation(subBoardX, subBoardY);
+	                subBoardRenderer.setBoardLength(subBoardLength, subBoardLength);
+
+	                subBoardXmouse = subBoardX;
+	                subBoardYmouse = subBoardY;
+	                subBoardLengthmouse = subBoardLength;
+	                subBoardRenderer.setupSizeParameters();
+	                subBoardRenderer.draw(g);
+
+	              } catch (Exception e) {
+	                // This can happen when no space is left for subboard.
+	              }
+	            }
+	            if (Lizzie.config.showWinrateGraph) {
+	              if (showListPane && isLargeSubboard) {
+	                if (!Lizzie.config.showVariationGraph) {
+	                  if (noComment) setListScrollpane(vx, vy, vw, vh);
+	                  else setListScrollpane(grx + grw / 2, 0, grw / 2, ch); // bbb
+	                } else {
+	                  setListScrollpane(grx + grw / 2, gry, grw / 2, grh);
+	                  grw = grw / 2;
+	                }
+	              }
+	              if (Lizzie.config.showLargeSubBoard()
+	                  && noComment
+	                  && noVariation
+	                  && noVariation
+	                  && !showListPane
+	                  && !Lizzie.config.showCaptured) {
+	                gry -= caph;
+	                grh += caph;
+	              }
+	              drawWinratePane(grx, gry, grw, grh);
+	            } else if (isLargeSubboard) {
+	              setListScrollpane(grx, gry, grw, grh);
+	            }
+	          } else {
+	            // Portrait mode
+	            boardY = (height - maxSize + topInset - bottomInset) / 2;
+	            int spaceW = width - leftInset - rightInset;
+	            int spaceH = boardY - topInset;
+	            int panelW = spaceW / 2;
+	            int panelH = spaceH / 2;
+	            // subboard
+	            subBoardLength = Math.min(spaceW, spaceH);
+	            subBoardX = spaceW - subBoardLength;
+	            subBoardWidth = subBoardLength;
+	            subBoardHeight = subBoardLength;
+	            subBoardY = capy + (boardY - topInset - subBoardLength) / 2;
+
+	            // captured stones
+	            capw = (spaceW - subBoardLength) / 2;
+	            caph = panelH * 4 / 5;
+	            // move statistics (winrate bar)
+	            statx = capx + capw;
+	            staty = capy;
+	            statw = capw;
+	            stath = caph;
+	            // winrate graph
+	            grx = capx;
+	            gry = staty + stath;
+	            grw = spaceW - subBoardLength;
+	            grh = boardY - gry;
+	            if (!Lizzie.config.showSubBoard) {
+
+	              grw = spaceW;
+	              capw = spaceW / 2;
+	              statw = capw;
+	              statx = capx + capw;
+	            }
+	            if (!Lizzie.config.showCaptured) {
+	              statx = capx;
+	              statw = spaceW;
+	            }
+	            if (!Lizzie.config.showWinrateGraph) {
+	              capw = grw;
+	              caph = spaceH;
+	            }
+	            // variation tree container
+	            vx = leftInset + panelW;
+	            vy = boardY + maxSize;
+	            vw = panelW;
+	            vh = height - vy - bottomInset;
+	            int treex = leftInset;
+	            int treey = vy;
+	            int treew = spaceW;
+	            int treeh = vh;
+	            if (Lizzie.config.showComment) {
+	              treew = spaceW * 6 / 10;
+	              treex = leftInset + spaceW * 4 / 10;
+	            }
+	            // comment panel
+	            int cx = capx, cy = vy, cw = spaceW, ch = vh;
+	            if (Lizzie.config.showVariationGraph || showListPane) cw = spaceW * 4 / 10;
+	            if (Lizzie.config.showStatus && !Lizzie.config.isMinMode() && !Lizzie.config.userKnownX)
+	              drawCommandString(g);
+
+	            if (Lizzie.config.showWinrateGraph) {
+	              drawMoveStatistics(g, statx, staty, statw, stath);
+	            }
+
+	            if (Lizzie.config.showStatus && !Lizzie.config.isMinMode()) {
+	              if (Lizzie.leelaz != null && Lizzie.leelaz.isLoaded()) {
+	                String statusKey =
+	                    "LizzieFrame.display." + (Lizzie.leelaz.isPondering() ? "on" : "off");
+	                String statusText =
+	                    Lizzie.resourceBundle.getString(statusKey)
+	                        + (Lizzie.config.userKnownX
+	                            ? ""
+	                            : Lizzie.resourceBundle.getString("LizzieFrame.display.space"));
+	                String ponderingText =
+	                    Lizzie.resourceBundle.getString("LizzieFrame.display.pondering");
+	                String weightText = "";
+	                if (EngineManager.isEmpty)
+	                  weightText = Lizzie.resourceBundle.getString("LizzieFrame.noEngineText");
+	                else weightText = Lizzie.leelaz.oriEnginename;
+	                String text2 = ponderingText + " " + statusText; // + " " + switchingText;
+	                drawPonderingState(
+	                    g, weightText, text2, ponderingX, ponderingY, ponderingY2, ponderingSize);
+	              }
+	            }
+	            boardRenderer.setLocation(boardX, boardY);
+	            boardRenderer.setBoardLength(maxSize, maxSize);
+	            boardRenderer.setupSizeParameters();
+	            boardRenderer.draw(g);
+	            // if (Lizzie.leelaz != null && Lizzie.leelaz.isLoaded()) {
+	            if (Lizzie.config.showStatus && !Lizzie.config.isMinMode()) {
+	              if (Lizzie.leelaz == null || !Lizzie.leelaz.isLoaded()) {
+	                String loadingText = getLoadingText();
+	                drawPonderingState(g, loadingText, loadingX, loadingY, loadingSize);
+	              }
+	            }
+
+	            // Todo: Make board move over when there is no space beside the board
+	            if (Lizzie.config.showCaptured) {
+	              drawCaptured(g, capx, capy, capw, caph, isSmallCap);
+	            }
+	            // dcl
+
+	            if (Lizzie.config.showVariationGraph || showListPane || Lizzie.config.showComment) {
 	              if (Lizzie.config.showVariationGraph || showListPane) {
 	                if (showListPane) {
 	                  if (Lizzie.config.showVariationGraph) {
@@ -13902,91 +15097,35 @@ public class LizzieFrame extends JFrame {
 	      }
 	    }
 	    // draw the image
-	    // Graphics2D bsGraphics = (Graphics2D) bs.getDrawGraphics();
-	    // bsGraphics.setRenderingHint(RenderingHints.KEY_RENDERING,
-	    // RenderingHints.VALUE_RENDER_QUALITY);
-	    // bsGraphics.drawImage(cachedBackground, 0, 0, null);
-	    // bsGraphics.drawImage(cachedImage, 0, 0, null);
-
-	    // cleanup
-	    // bsGraphics.dispose();
-	    // bs.show();
-
-	    //    if (Config.isScaled) {
-	    //
-	    //    	 // final AffineTransform t = g1.getTransform();
-	    //         // t.setToScale(1, 1);
-	    //        //  g1.setTransform(t);
-	    //      g0.drawImage(
-	    //          cachedBackground,
-	    //          0,
-	    //          Lizzie.config.showTopToolBar
-	    //              ? Utils.zoomOut(
-	    //                  Lizzie.frame.getJMenuBar().getHeight() * (Lizzie.config.showDoubleMenu ? 2 :
-	    // 1)
-	    //                      + (Lizzie.config.showDoubleMenu
-	    //                          ? topPanelHeight - Config.menuHeight
-	    //                          : 0))
-	    //              : Utils.zoomOut(Lizzie.frame.getJMenuBar().getHeight()),
-	    //          null);
-	    //      g0.drawImage(
-	    //          cachedImage,
-	    //          0,
-	    //          Lizzie.config.showTopToolBar
-	    //              ? Utils.zoomOut(
-	    //                  Lizzie.frame.getJMenuBar().getHeight() * (Lizzie.config.showDoubleMenu ? 2 :
-	    // 1)
-	    //                      + (Lizzie.config.showDoubleMenu
-	    //                          ? topPanelHeight - Config.menuHeight
-	    //                          : 0))
-	    //              : Utils.zoomOut(Lizzie.frame.getJMenuBar().getHeight()),
-	    //          null);
-	    //      if (Lizzie.config.showWinrateGraph && cachedWinrateImage != null && !showControls)
-	    //        g0.drawImage(
-	    //            cachedWinrateImage,
-	    //            grx,
-	    //            gry
-	    //                + (Lizzie.config.showTopToolBar
-	    //                    ? Utils.zoomOut(
-	    //                        Lizzie.frame.getJMenuBar().getHeight()
-	    //                                * (Lizzie.config.showDoubleMenu ? 2 : 1)
-	    //                            + (Lizzie.config.showDoubleMenu
-	    //                                ? topPanelHeight - Config.menuHeight
-	    //                                : 0))
-	    //                    : Utils.zoomOut(Lizzie.frame.getJMenuBar().getHeight())),
-	    //            null);
-	    //    } else
-	    //   {
-	    g0.drawImage(cachedBackground, 0, 0, null);
+	 //   g0.drawImage(cachedBackground, 0, 0, null);
 	    g0.drawImage(cachedImage, 0, 0, null);
 	    if (Lizzie.config.showWinrateGraph && cachedWinrateImage != null && !showControls)
 	      g0.drawImage(cachedWinrateImage, grx, gry, null);
-	    //  }
 	  }
+  private void drawWinrateBackground(Graphics2D g,int x, int y, int w, int h) {
+   	   int halfHeight = h / 2;
+   final Paint gradient =
+       new GradientPaint(
+           new Point2D.Float(x, y),
+           new Color(120, 120, 120, 180),
+           new Point2D.Float(x, y + halfHeight),
+           new Color(155, 155, 155, 185));
+   final Paint gradient2 =
+       new GradientPaint(
+           new Point2D.Float(x, y + halfHeight),
+           new Color(155, 155, 155, 185),
+           new Point2D.Float(x, y + h),
+           new Color(120, 120, 120, 180));
+   Paint original = g.getPaint();
+   g.setPaint(gradient);
+   g.fillRect(x, y, w, halfHeight);
+   g.setPaint(gradient2);
+   g.fillRect(x, y + halfHeight, w, h - halfHeight);
+   g.setPaint(original);
+  }
   
-  private void drawWinratePane(Graphics2D gBack,int x, int y, int w, int h,boolean refreshInfo,boolean refreshBack) {
-	    if(refreshBack) {
-	    	   int halfHeight = h / 2;
-	    final Paint gradient =
-	        new GradientPaint(
-	            new Point2D.Float(x, y),
-	            new Color(120, 120, 120, 180),
-	            new Point2D.Float(x, y + halfHeight),
-	            new Color(155, 155, 155, 185));
-	    final Paint gradient2 =
-	        new GradientPaint(
-	            new Point2D.Float(x, y + halfHeight),
-	            new Color(155, 155, 155, 185),
-	            new Point2D.Float(x, y + h),
-	            new Color(120, 120, 120, 180));
-	    Paint original = gBack.getPaint();
-	    gBack.setPaint(gradient);
-	    gBack.fillRect(x, y, w, halfHeight);
-	    gBack.setPaint(gradient2);
-	    gBack.fillRect(x, y + halfHeight, w, h - halfHeight);
-	    gBack.setPaint(original);
-	    }
-	    else {
+  
+  private void drawWinratePaneInfo(int x, int y, int w, int h) {	   
 	    	 if (w < 10 || h < 10) {
 	   	      cachedWinrateImage = new BufferedImage(1, 1, TYPE_INT_ARGB);
 	   	      return;
@@ -14095,8 +15234,7 @@ public class LizzieFrame extends JFrame {
 	    	        Lizzie.frame.cachedWinrateImage = cachedWinrateBackgroundImage;
 	    	      }
 	    	      winratePaneTime = System.currentTimeMillis();
-	    	    }
-	    }
+	    	    }	    
 	  
 	  }
 

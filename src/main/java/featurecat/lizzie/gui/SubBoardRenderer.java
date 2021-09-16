@@ -143,7 +143,7 @@ public class SubBoardRenderer {
 
   /** Draw a go board */
   public void draw(Graphics2D g) {
-    drawGoban(g);
+ //   drawGoban(g);
     if ((!showHeat && !Lizzie.config.subBoardRaw)
         || (Lizzie.config.isFourSubMode() && !showHeat && this != Lizzie.frame.subBoardRenderer4)) {
       drawPlay(g);
@@ -161,6 +161,10 @@ public class SubBoardRenderer {
       return;
     }
   }
+  
+  public void drawBackground(Graphics2D g) {
+	    drawGoban(g);	    
+	  }
 
   private void drawPlay(Graphics2D g) {
     // TODO Auto-generated method stub
@@ -1448,8 +1452,10 @@ public class SubBoardRenderer {
    * @param boardLength the boardLength of the board
    */
   public void setBoardLength(int boardWidth, int boardHeight) {
-    this.boardWidth = boardWidth;
-    this.boardHeight = boardHeight;
+	  if(this.boardWidth!=boardWidth||this.boardHeight!=boardHeight)
+	    {this.boardWidth = boardWidth;
+	    this.boardHeight = boardHeight;
+	    setupSizeParameters();}
   }
 
   /**

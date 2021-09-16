@@ -157,6 +157,9 @@ public class BoardRenderer {
     this.isIndependBoard = isIndependBoard;
   }
 
+  public void drawBackground(Graphics2D g) {
+	  drawGoban(g);  
+  }
   /** Draw a go board */
   public void draw(Graphics2D g) {
     //    if (Lizzie.config.isScaled) {
@@ -166,7 +169,7 @@ public class BoardRenderer {
     // setupSizeParameters();
 
     // Stopwatch timer = new Stopwatch();
-    drawGoban(g);
+  //  drawGoban(g);
     if (Board.boardWidth <= 3) {
       int oriStoneRadius = stoneRadius;
       stoneRadius = stoneRadius / 2;
@@ -4018,8 +4021,10 @@ public class BoardRenderer {
    * @param boardLength the boardLength of the board
    */
   public void setBoardLength(int boardWidth, int boardHeight) {
-    this.boardWidth = boardWidth;
+	  if(this.boardWidth!=boardWidth||this.boardHeight!=boardHeight)
+    {this.boardWidth = boardWidth;
     this.boardHeight = boardHeight;
+    setupSizeParameters();}
   }
 
   /**
