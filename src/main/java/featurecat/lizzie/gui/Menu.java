@@ -3546,10 +3546,10 @@ public class Menu extends JMenuBar {
     yikeLive.addActionListener(
         new ActionListener() {
           public void actionPerformed(ActionEvent e) {
-            Lizzie.frame.bowser(
-                "https://home.yikeweiqi.com/#/live",
-                resourceBundle.getString("BottomToolbar.yikeLive"),
-                true);
+//            Lizzie.frame.bowser(
+//                "https://home.yikeweiqi.com/#/live",
+//                resourceBundle.getString("BottomToolbar.yikeLive"),
+//                true);
           }
         });
 
@@ -3560,10 +3560,10 @@ public class Menu extends JMenuBar {
     yikeRoom.addActionListener(
         new ActionListener() {
           public void actionPerformed(ActionEvent e) {
-            Lizzie.frame.bowser(
-                "https://home.yikeweiqi.com/#/game",
-                resourceBundle.getString("BottomToolbar.yikeRoom"),
-                true);
+//            Lizzie.frame.bowser(
+//                "https://home.yikeweiqi.com/#/game",
+//                resourceBundle.getString("BottomToolbar.yikeRoom"),
+//                true);
           }
         });
 

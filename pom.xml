@@ -89,7 +89,7 @@
 			<artifactId>json</artifactId>
 			<version>20180130</version>
 		</dependency>
-	
+	<!--
 	 	<dependency>
   			<groupId>com.teamdev.jxbrowser</groupId>
   			<artifactId>license</artifactId>
@@ -108,7 +108,7 @@
   			<version>6.21</version>
 		</dependency>
 
-	<!--
+	
      	<dependency>
   			<groupId>com.teamdev.jxbrowser</groupId>
   			<artifactId>jxbrowser-win32</artifactId>

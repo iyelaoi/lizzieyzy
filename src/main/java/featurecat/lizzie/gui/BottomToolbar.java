@@ -712,10 +712,10 @@ public class BottomToolbar extends JPanel {
     yikeLive.addActionListener(
         new ActionListener() {
           public void actionPerformed(ActionEvent e) {
-            Lizzie.frame.bowser(
-                "https://home.yikeweiqi.com/#/live",
-                (Lizzie.resourceBundle.getString("BottomToolbar.yikeLive")),
-                true);
+//            Lizzie.frame.bowser(
+//                "https://home.yikeweiqi.com/#/live",
+//                (Lizzie.resourceBundle.getString("BottomToolbar.yikeLive")),
+//                true);
           }
         });
     yike.add(yikeLive);
@@ -725,10 +725,10 @@ public class BottomToolbar extends JPanel {
     yikeRoom.addActionListener(
         new ActionListener() {
           public void actionPerformed(ActionEvent e) {
-            Lizzie.frame.bowser(
-                "https://home.yikeweiqi.com/#/game",
-                (Lizzie.resourceBundle.getString("BottomToolbar.yikeRoom")),
-                true);
+//            Lizzie.frame.bowser(
+//                "https://home.yikeweiqi.com/#/game",
+//                (Lizzie.resourceBundle.getString("BottomToolbar.yikeRoom")),
+//                true);
           }
         });
     yike.add(yikeRoom);

@@ -65,7 +65,7 @@ public class ShareMessage extends JDialog {
     open.addActionListener(
         new ActionListener() {
           public void actionPerformed(ActionEvent e) {
-            Lizzie.frame.bowser(links, "Lizzie Player", false);
+        //    Lizzie.frame.bowser(links, "Lizzie Player", false);
           }
         });
 
