@@ -86,8 +86,9 @@ public class Loggin extends JDialog {
                       Lizzie.config.uiConfig.put("up-load-passwd", Lizzie.config.uploadPassWd);
                       setVisible(false);
                       if (editPrivate) {
-                        PrivateKifuSearch search = new PrivateKifuSearch();
-                        search.setVisible(true);
+                        //                        PrivateKifuSearch search = new
+                        // PrivateKifuSearch();
+                        //                        search.setVisible(true);
                       }
                     }
                     if (value == 1) {
@@ -106,8 +107,9 @@ public class Loggin extends JDialog {
                       Lizzie.config.uiConfig.put("up-load-passwd", Lizzie.config.uploadPassWd);
                       setVisible(false);
                       if (editPrivate) {
-                        PrivateKifuSearch search = new PrivateKifuSearch();
-                        search.setVisible(true);
+                        //                        PrivateKifuSearch search = new
+                        // PrivateKifuSearch();
+                        //                        search.setVisible(true);
                       }
                     }
                   } catch (Exception ex) {

@@ -21,7 +21,6 @@ import java.util.Locale;
 import java.util.ResourceBundle;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
-import org.jdesktop.swingx.util.OS;
 
 public class KataEstimate {
   public Process process;
@@ -639,7 +638,7 @@ public class KataEstimate {
   public void tryToDignostic(String message) {
     EngineFailedMessage engineFailedMessage =
         new EngineFailedMessage(
-            commands, engineCommand, message, !this.useJavaSSH && OS.isWindows(), true);
+            commands, engineCommand, message, !this.useJavaSSH && Utils.isWindows(), true);
     engineFailedMessage.setVisible(true);
   }
 }

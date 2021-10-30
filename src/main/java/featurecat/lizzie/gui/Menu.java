@@ -33,7 +33,6 @@ import javax.swing.event.MenuListener;
 import javax.swing.event.PopupMenuEvent;
 import javax.swing.event.PopupMenuListener;
 import javax.swing.text.Document;
-import org.jdesktop.swingx.util.OS;
 import org.json.JSONArray;
 
 public class Menu extends JMenuBar {
@@ -3546,10 +3545,10 @@ public class Menu extends JMenuBar {
     yikeLive.addActionListener(
         new ActionListener() {
           public void actionPerformed(ActionEvent e) {
-//            Lizzie.frame.bowser(
-//                "https://home.yikeweiqi.com/#/live",
-//                resourceBundle.getString("BottomToolbar.yikeLive"),
-//                true);
+            //            Lizzie.frame.bowser(
+            //                "https://home.yikeweiqi.com/#/live",
+            //                resourceBundle.getString("BottomToolbar.yikeLive"),
+            //                true);
           }
         });
 
@@ -3560,10 +3559,10 @@ public class Menu extends JMenuBar {
     yikeRoom.addActionListener(
         new ActionListener() {
           public void actionPerformed(ActionEvent e) {
-//            Lizzie.frame.bowser(
-//                "https://home.yikeweiqi.com/#/game",
-//                resourceBundle.getString("BottomToolbar.yikeRoom"),
-//                true);
+            //            Lizzie.frame.bowser(
+            //                "https://home.yikeweiqi.com/#/game",
+            //                resourceBundle.getString("BottomToolbar.yikeRoom"),
+            //                true);
           }
         });
 
@@ -3590,7 +3589,7 @@ public class Menu extends JMenuBar {
 
     final JFontMenuItem readBoard =
         new JFontMenuItem(resourceBundle.getString("Menu.readBoard")); // ("棋盘识别工具(Alt+O)");
-    if (OS.isWindows()) live.add(readBoard);
+    if (Utils.isWindows()) live.add(readBoard);
 
     readBoard.addActionListener(
         new ActionListener() {
@@ -9410,7 +9409,7 @@ public class Menu extends JMenuBar {
   protected void paintComponent(Graphics g) {
     super.paintComponent(g);
     if (!Lizzie.config.useJavaLooks
-        && OS.isWindows()
+        && Utils.isWindows()
         && (Boolean) Toolkit.getDefaultToolkit().getDesktopProperty("win.xpstyle.themeActive")) {
       Graphics2D g2d = (Graphics2D) g;
       g2d.setColor(new Color(232, 232, 232));

@@ -16,7 +16,6 @@ import javax.swing.ButtonGroup;
 import javax.swing.ImageIcon;
 import javax.swing.JCheckBox;
 import javax.swing.JDialog;
-import org.jdesktop.swingx.util.OS;
 
 public class FirstUseSettings extends JDialog {
 
@@ -527,7 +526,7 @@ public class FirstUseSettings extends JDialog {
             rdoMouseOverSuggestionNoRefresh.setSelected(true);
             rdoScoreOnBoardWithOutKomi.setSelected(true);
             rdoAlternately.setSelected(true);
-            if (OS.isWindows()) rdoSysLooks.setSelected(true);
+            if (Utils.isWindows()) rdoSysLooks.setSelected(true);
             else rdoJavaLooks.setSelected(true);
             txtLimitSuggestion.setText("10");
             txtLimitVariation.setText("0");

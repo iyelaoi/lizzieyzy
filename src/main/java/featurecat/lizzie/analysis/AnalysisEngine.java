@@ -22,7 +22,6 @@ import java.util.Optional;
 import java.util.ResourceBundle;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
-import org.jdesktop.swingx.util.OS;
 import org.json.JSONArray;
 import org.json.JSONObject;
 
@@ -133,7 +132,7 @@ public class AnalysisEngine {
   public void tryToDignostic(String message) {
     EngineFailedMessage engineFailedMessage =
         new EngineFailedMessage(
-            commands, engineCommand, message, !useJavaSSH && OS.isWindows(), false);
+            commands, engineCommand, message, !useJavaSSH && Utils.isWindows(), false);
     engineFailedMessage.setModal(true);
     engineFailedMessage.setVisible(true);
   }

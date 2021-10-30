@@ -1746,7 +1746,7 @@ public class EngineManager {
         } catch (JSONException e1) {
           // TODO Auto-generated catch block
           e1.printStackTrace();
-        } catch (IOException e1) {
+        } catch (Exception e1) {
           // TODO Auto-generated catch block
           e1.printStackTrace();
         }

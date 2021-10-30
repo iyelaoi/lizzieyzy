@@ -8,7 +8,6 @@ import java.io.InputStreamReader;
 import java.io.OutputStreamWriter;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
-import org.jdesktop.swingx.util.OS;
 
 public class GetFoxRequest {
   private Process process;
@@ -25,7 +24,7 @@ public class GetFoxRequest {
     }
     String jarString = " -jar -Dfile.encoding=utf-8 foxReq" + File.separator + "foxRequestQ.jar";
     try {
-      if (OS.isWindows()) {
+      if (Utils.isWindows()) {
         boolean success = false;
         String java64Path = "jre\\java11\\bin\\java.exe";
         File java64 = new File(java64Path);

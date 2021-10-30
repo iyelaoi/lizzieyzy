@@ -28,11 +28,11 @@ import java.util.Locale;
 import java.util.ResourceBundle;
 import javax.swing.*;
 import javax.swing.plaf.FontUIResource;
-import org.jdesktop.swingx.util.OS;
 import org.json.JSONException;
 
 /** Main class. */
 public class Lizzie {
+  public static Leelaz leelaz = new Leelaz("");
   public static ResourceBundle resourceBundle = ResourceBundle.getBundle("l10n.DisplayStrings");
   public static Config config;
   public static GtpConsolePane gtpConsole;
@@ -40,7 +40,6 @@ public class Lizzie {
   public static JDialog loadEngine;
   public static FirstUseSettings firstUseSettings;
   public static Board board;
-  public static Leelaz leelaz;
   public static Leelaz leelaz2;
   public static String lizzieVersion = "yzy2.4.5";
   public static String checkVersion = "211027";
@@ -51,7 +50,9 @@ public class Lizzie {
   public static Float javaScaleFactor = 1.0f;
   public static String javaVersionString = "";
   public static Float sysScaleFactor =
-      OS.isWindows() ? (java.awt.Toolkit.getDefaultToolkit().getScreenResolution() / 96.0f) : 1.0f;
+      Utils.isWindows()
+          ? (java.awt.Toolkit.getDefaultToolkit().getScreenResolution() / 96.0f)
+          : 1.0f;
 
   /** Launches the game window, and runs the game. */
   public static void main(String[] args) throws IOException {
@@ -123,7 +124,7 @@ public class Lizzie {
     } catch (Exception e) {
     }
     System.out.println("java version:" + javaVersionString);
-    leelaz = new Leelaz("");
+    // leelaz = new Leelaz("");
 
     AwareScaled awareScaled = new AwareScaled();
     awareScaled.setVisible(true);

@@ -204,9 +204,9 @@ public class BatchShareFrame extends JDialog {
             setAlwaysOnTop(Lizzie.config.mainsalwaysontop);
             if (files.length > 0) {
               setVisible(false);
-              PrivateKifuSearch search = new PrivateKifuSearch();
-              search.setVisible(true);
-              search.searchToday();
+              //              PrivateKifuSearch search = new PrivateKifuSearch();
+              //              search.setVisible(true);
+              //              search.searchToday();
             }
           }
         });

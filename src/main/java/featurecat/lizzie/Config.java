@@ -10,7 +10,6 @@ import java.awt.Toolkit;
 import java.io.*;
 import java.util.*;
 import javax.swing.*;
-import org.jdesktop.swingx.util.OS;
 import org.json.*;
 
 public class Config {
@@ -906,7 +905,7 @@ public class Config {
     showPureEstimateBySize = uiConfig.optBoolean("show-Pure-estimate-by-size", false);
     showPureEstimateBigBelow = uiConfig.optBoolean("show-Pure-estimate-big-below", true);
 
-    useJavaLooks = uiConfig.optBoolean("use-java-looks", !OS.isWindows());
+    useJavaLooks = uiConfig.optBoolean("use-java-looks", !Utils.isWindows());
     showNextMoveBlunder = uiConfig.optBoolean("show-next-move-blunder", true);
     batchAnalysisPlayouts = uiConfig.optInt("batch-analysis-playouts", 100);
     minPlayoutsForNextMove = uiConfig.optInt("min-playouts-for-next-move", 30);
@@ -2133,16 +2132,16 @@ public class Config {
         persistedUi.put("suggestions-list-position-9", pos2);
       }
     }
-    if (Lizzie.frame.search != null) {
-      JSONArray searchPos = new JSONArray();
-
-      searchPos.put(Lizzie.frame.search.getX());
-      searchPos.put(Lizzie.frame.search.getY());
-      searchPos.put(Lizzie.frame.search.getWidth());
-      searchPos.put(Lizzie.frame.search.getHeight());
-
-      persistedUi.put("public-kifu-search", searchPos);
-    }
+    //    if (Lizzie.frame.search != null) {
+    //      JSONArray searchPos = new JSONArray();
+    //
+    //      searchPos.put(Lizzie.frame.search.getX());
+    //      searchPos.put(Lizzie.frame.search.getY());
+    //      searchPos.put(Lizzie.frame.search.getWidth());
+    //      searchPos.put(Lizzie.frame.search.getHeight());
+    //
+    //      persistedUi.put("public-kifu-search", searchPos);
+    //    }
     if (Lizzie.frame.moveListFrame != null) {
       JSONArray badmoveslistPos = new JSONArray();
 

@@ -34,7 +34,6 @@ import javax.swing.Box;
 import javax.swing.JDialog;
 import javax.swing.JOptionPane;
 import javax.swing.SwingUtilities;
-import org.jdesktop.swingx.util.OS;
 import org.json.JSONException;
 import org.json.JSONObject;
 
@@ -223,7 +222,7 @@ public class Leelaz {
    *
    * @throws IOException
    */
-  public Leelaz(String engineCommand) throws IOException, JSONException {
+  public Leelaz(String engineCommand) {
     // board = new Board();
     bestMoves = new ArrayList<>();
     currentTotalPlayouts = 0;
@@ -342,10 +341,10 @@ public class Leelaz {
         return;
       }
     } else {
-      //  ProcessBuilder processBuilder = new ProcessBuilder(commands);
+      ProcessBuilder processBuilder = new ProcessBuilder(commands);
       //   processBuilder.redirectErrorStream(false);
       try {
-        process = Runtime.getRuntime().exec(engineCommand); // processBuilder.start();
+        process = processBuilder.start(); // Runtime.getRuntime().exec(engineCommand); //
       } catch (IOException e) {
         String err = e.getLocalizedMessage();
         try {
@@ -3370,7 +3369,7 @@ public class Leelaz {
     if (engineFailedMessage != null && engineFailedMessage.isVisible()) return;
     engineFailedMessage =
         new EngineFailedMessage(
-            commands, engineCommand, message, !useJavaSSH && OS.isWindows(), true);
+            commands, engineCommand, message, !useJavaSSH && Utils.isWindows(), true);
     engineFailedMessage.setModal(isModal);
     engineFailedMessage.setVisible(true);
   }

@@ -22,7 +22,6 @@ import java.util.Timer;
 import java.util.TimerTask;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
-import org.jdesktop.swingx.util.OS;
 
 public class ReadBoard {
   public Process process;
@@ -157,7 +156,7 @@ public class ReadBoard {
       param = param + (int) Math.round(Config.frameFontSize * Lizzie.javaScaleFactor);
       param = " " + param + " " + Board.boardWidth + " " + Board.boardHeight;
       try {
-        if (OS.isWindows()) {
+        if (Utils.isWindows()) {
           boolean success = false;
           String java64Path = "jre\\java11\\bin\\java.exe";
           File java64 = new File(java64Path);

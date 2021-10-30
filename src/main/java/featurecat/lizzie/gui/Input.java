@@ -498,10 +498,10 @@ public class Input implements MouseListener, KeyListener, MouseWheelListener, Mo
         } else if (e.isAltDown()) {
           Lizzie.frame.openBoardSync();
         } else if (e.isShiftDown()) {
-//          Lizzie.frame.bowser(
-//              "https://home.yikeweiqi.com/#/live",
-//              Lizzie.resourceBundle.getString("BottomToolbar.yikeLive"),
-//              true);
+          //          Lizzie.frame.bowser(
+          //              "https://home.yikeweiqi.com/#/live",
+          //              Lizzie.resourceBundle.getString("BottomToolbar.yikeLive"),
+          //              true);
         } else {
           Lizzie.frame.openFile();
         }
