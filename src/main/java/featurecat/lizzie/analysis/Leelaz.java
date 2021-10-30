@@ -54,7 +54,7 @@ public class Leelaz {
   // private boolean isResponse=false;
   private ArrayDeque<String> cmdQueue;
 
-  public Process process;
+  private Process process;
 
   private BufferedReader inputStream;
   private BufferedOutputStream outputStream;
@@ -342,10 +342,10 @@ public class Leelaz {
         return;
       }
     } else {
-      ProcessBuilder processBuilder = new ProcessBuilder(commands);
-      processBuilder.redirectErrorStream(false);
+    //  ProcessBuilder processBuilder = new ProcessBuilder(commands);
+   //   processBuilder.redirectErrorStream(false);
       try {
-        process = processBuilder.start();
+        process =Runtime.getRuntime().exec(engineCommand);//processBuilder.start();
       } catch (IOException e) {
         String err = e.getLocalizedMessage();
         try {
@@ -3630,6 +3630,10 @@ public class Leelaz {
 
   private boolean isLeela0110PonderingValid() {
     return leela0110PonderingBoardData == Lizzie.board.getData();
+  }
+  
+  public Process getProcess() {
+	  return process;
   }
 
   public int getBestMovesPlayouts() {

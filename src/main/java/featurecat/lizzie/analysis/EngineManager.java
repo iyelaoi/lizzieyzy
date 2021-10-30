@@ -1543,10 +1543,10 @@ public class EngineManager {
   private void checkEngineAlive() {
     if (isEmpty) return;
     if (!isEngineGame && Lizzie.leelaz != null) {
-      if (Lizzie.leelaz.process != null
+      if (Lizzie.leelaz.getProcess() != null
           && Lizzie.leelaz.isLoaded()
           && Lizzie.leelaz.canCheckAlive
-          && !Lizzie.leelaz.process.isAlive())
+          && !Lizzie.leelaz.getProcess().isAlive())
         try {
           Lizzie.leelaz.restartClosedEngine(currentEngineNo);
         } catch (IOException e) {
@@ -1606,8 +1606,8 @@ public class EngineManager {
       return;
     }
     if (engineList.get(engineGameInfo.firstEngineIndex).canCheckAlive
-        && ((engineList.get(engineGameInfo.firstEngineIndex).process != null
-                && !engineList.get(engineGameInfo.firstEngineIndex).process.isAlive())
+        && ((engineList.get(engineGameInfo.firstEngineIndex).getProcess() != null
+                && !engineList.get(engineGameInfo.firstEngineIndex).getProcess().isAlive())
             || (engineList.get(engineGameInfo.firstEngineIndex).useJavaSSH
                 && engineList.get(engineGameInfo.firstEngineIndex).javaSSHClosed))) {
       try {
@@ -1618,8 +1618,8 @@ public class EngineManager {
       }
     }
     if (engineList.get(engineGameInfo.secondEngineIndex).canCheckAlive
-        && ((engineList.get(engineGameInfo.secondEngineIndex).process != null
-                && !engineList.get(engineGameInfo.secondEngineIndex).process.isAlive())
+        && ((engineList.get(engineGameInfo.secondEngineIndex).getProcess() != null
+                && !engineList.get(engineGameInfo.secondEngineIndex).getProcess().isAlive())
             || (engineList.get(engineGameInfo.secondEngineIndex).useJavaSSH
                 && engineList.get(engineGameInfo.secondEngineIndex).javaSSHClosed))) {
       try {
@@ -1820,7 +1820,7 @@ public class EngineManager {
       Lizzie.leelaz.isNormalEnd = true;
       if (Lizzie.leelaz.useJavaSSH) {
         Lizzie.leelaz.javaSSH.close();
-      } else Lizzie.leelaz.process.destroyForcibly();
+      } else Lizzie.leelaz.getProcess().destroyForcibly();
       Thread.sleep(200);
       Lizzie.leelaz.started = false;
       Lizzie.leelaz.isLoaded = false;
@@ -1838,7 +1838,7 @@ public class EngineManager {
       engineList.get(index).isNormalEnd = true;
       if (engineList.get(index).useJavaSSH) {
         engineList.get(index).javaSSH.close();
-      } else engineList.get(index).process.destroyForcibly();
+      } else engineList.get(index).getProcess().destroyForcibly();
       Thread.sleep(200);
       engineList.get(index).started = false;
       engineList.get(index).isLoaded = false;
@@ -1857,7 +1857,7 @@ public class EngineManager {
       if (Lizzie.leelaz2.useJavaSSH) {
         Lizzie.leelaz2.javaSSH.close();
       }
-      Lizzie.leelaz2.process.destroyForcibly();
+      Lizzie.leelaz2.getProcess().destroyForcibly();
       Thread.sleep(200);
       Lizzie.leelaz2.started = false;
       Lizzie.leelaz2.isLoaded = false;
