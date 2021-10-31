@@ -1150,7 +1150,7 @@ public class Leelaz {
         return;
       } else {
         if (Lizzie.gtpConsole.isVisible() || Lizzie.config.alwaysGtp || !this.isLoaded)
-          Lizzie.gtpConsole.addLine(line + "\n");
+          Lizzie.gtpConsole.addLine(line);
       }
       //			if (Lizzie.engineManager.isEngineGame && this.isPondering) {
       //				Lizzie.engineManager.startInfoTime = System.currentTimeMillis();
@@ -2691,7 +2691,7 @@ public class Leelaz {
     if (command.startsWith("fixed_handicap")
         || (isKatago && command.startsWith("place_free_handicap"))) isSettingHandicap = true;
     sendToWriterThread(command + "\n");
-    if (Lizzie.engineManager.isEngineGame()) {
+    if (EngineManager.isEngineGame()) {
       Lizzie.gtpConsole.addCommandForEngineGame(
           command,
           cmdNumber,
@@ -3376,7 +3376,7 @@ public class Leelaz {
   }
 
   public void tryToDignostic(String message, boolean isModal) {
-    if (!Lizzie.config.autoCheckEngineAlive && Lizzie.engineManager.isEngineGame())
+    if (!Lizzie.config.autoCheckEngineAlive && EngineManager.isEngineGame())
       Lizzie.engineManager.clearEngineGame();
     if (engineFailedMessage != null && engineFailedMessage.isVisible()) return;
     engineFailedMessage =

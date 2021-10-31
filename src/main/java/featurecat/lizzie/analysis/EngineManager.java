@@ -2266,7 +2266,7 @@ public class EngineManager {
     LizzieFrame.menu.changeicon(index);
   }
 
-  public boolean isEngineGame() {
+  public static boolean isEngineGame() {
     return isPreEngineGame || isEngineGame;
   }
 
