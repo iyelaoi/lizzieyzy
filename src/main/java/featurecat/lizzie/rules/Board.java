@@ -3356,7 +3356,8 @@ public class Board {
 
   public void updateWinrate() {
     updateMovelist(history.getCurrentHistoryNode());
-    if ((Lizzie.leelaz.isPondering() && !isLoadingFile) || EngineManager.isEngineGame) {
+    if ((Lizzie.leelaz != null && Lizzie.leelaz.isPondering() && !isLoadingFile)
+        || EngineManager.isEngineGame) {
       updateComment();
     }
   }

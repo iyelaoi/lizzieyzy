@@ -3675,7 +3675,7 @@ public class ConfigDialog2 extends JDialog {
 
     Lizzie.config.autoCheckEngineAlive = chkCheckEngineAlive.isSelected();
     Lizzie.config.uiConfig.put("auto-check-engine-alive", Lizzie.config.autoCheckEngineAlive);
-    Lizzie.engineManager.autoCheckEngineAlive(Lizzie.config.autoCheckEngineAlive);
+    //  Lizzie.engineManager.autoCheckEngineAlive(Lizzie.config.autoCheckEngineAlive);
     if (chkShowIndependentMainBoard.isSelected()) {
       if (!Lizzie.config.isShowingIndependentMain) Lizzie.frame.toggleIndependentMainBoard();
     } else {

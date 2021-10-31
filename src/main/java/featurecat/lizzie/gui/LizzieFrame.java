@@ -9,10 +9,8 @@ import com.jhlabs.image.GaussianFilter;
 import featurecat.lizzie.Config;
 import featurecat.lizzie.ExtraMode;
 import featurecat.lizzie.Lizzie;
-import featurecat.lizzie.analysis.AnalysisEngine;
 import featurecat.lizzie.analysis.EngineManager;
 import featurecat.lizzie.analysis.GameInfo;
-import featurecat.lizzie.analysis.KataEstimate;
 import featurecat.lizzie.analysis.Leelaz;
 import featurecat.lizzie.analysis.MoveData;
 import featurecat.lizzie.analysis.ReadBoard;
@@ -249,7 +247,7 @@ public class LizzieFrame extends JFrame {
   // private Rectangle commentRect;
   // private int commentPos = 0;
   //  private boolean redrawCommentForce = false;
-  public KataEstimate zen;
+  // public KataEstimate zen;
   public SetEstimateParam setEstimateParam;
   public ReadBoard readBoard;
   public ConfigDialog2 configDialog2;
@@ -444,7 +442,7 @@ public class LizzieFrame extends JFrame {
   private String markupValue;
   public ArrayList<String> priorityMoveCoords = new ArrayList<String>();
 
-  public AnalysisEngine analysisEngine;
+  // public AnalysisEngine analysisEngine;
   private boolean redrawWinratePaneOnly = false;
   public boolean mouseOverChanged = false;
   public boolean isAutoReplying = false;
@@ -2536,48 +2534,48 @@ public class LizzieFrame extends JFrame {
   }
 
   public void countstones(boolean shouldRetart) {
-    if (estimateResults == null || !estimateResults.isVisible()) {
-      if (Lizzie.frame.floatBoard != null && Lizzie.frame.floatBoard.isVisible())
-        estimateResults = new EstimateResults(null);
-      else estimateResults = new EstimateResults(this);
-    }
-    if (Lizzie.config.showKataGoEstimate
-        && !Lizzie.config.isHiddenKataEstimate
-        && Lizzie.leelaz.isKatago) {
-      Lizzie.config.showKataGoEstimate = false;
-      clearKataEstimate();
-      Lizzie.leelaz.ponder();
-    }
-    if (shouldRetart) {
-      if (zen == null
-          || zen.useJavaSSH && zen.javaSSHClosed
-          || (!zen.useJavaSSH && (zen.process == null || !zen.process.isAlive()))) {
-        try {
-          zen = new KataEstimate(false);
-        } catch (IOException e1) {
-          e1.printStackTrace();
-        }
-      }
-    }
-    //  zen.noread = false;
-    zen.syncboradstat();
-    zen.countStones();
-    isCounting = true;
+    //    if (estimateResults == null || !estimateResults.isVisible()) {
+    //      if (Lizzie.frame.floatBoard != null && Lizzie.frame.floatBoard.isVisible())
+    //        estimateResults = new EstimateResults(null);
+    //      else estimateResults = new EstimateResults(this);
+    //    }
+    //    if (Lizzie.config.showKataGoEstimate
+    //        && !Lizzie.config.isHiddenKataEstimate
+    //        && Lizzie.leelaz.isKatago) {
+    //      Lizzie.config.showKataGoEstimate = false;
+    //      clearKataEstimate();
+    //      Lizzie.leelaz.ponder();
+    //    }
+    //    if (shouldRetart) {
+    //      if (zen == null
+    //          || zen.useJavaSSH && zen.javaSSHClosed
+    //          || (!zen.useJavaSSH && (zen.process == null || !zen.process.isAlive()))) {
+    //        try {
+    //          zen = new KataEstimate(false);
+    //        } catch (IOException e1) {
+    //          e1.printStackTrace();
+    //        }
+    //      }
+    //    }
+    //    //  zen.noread = false;
+    //    zen.syncboradstat();
+    //    zen.countStones();
+    //    isCounting = true;
   }
 
   public void restartZen() {
-    if (zen != null) {
-      try {
-        zen.shutdown();
-      } catch (Exception e) {
-      }
-    }
-    try {
-      zen = new KataEstimate(false);
-    } catch (IOException e) {
-      // TODO Auto-generated catch block
-      e.printStackTrace();
-    }
+    //    if (zen != null) {
+    //      try {
+    //        zen.shutdown();
+    //      } catch (Exception e) {
+    //      }
+    //    }
+    //    try {
+    //      zen = new KataEstimate(false);
+    //    } catch (IOException e) {
+    //      // TODO Auto-generated catch block
+    //      e.printStackTrace();
+    //    }
   }
 
   public void toggleAlwaysOntop() {
@@ -4999,9 +4997,9 @@ public class LizzieFrame extends JFrame {
 
   private String getLoadingText() {
     // TODO Auto-generated method stub
-    if (Lizzie.leelaz.isDownWithError)
+    if (Lizzie.leelaz != null && Lizzie.leelaz.isDownWithError)
       return Lizzie.resourceBundle.getString("LizzieFrame.display.down");
-    else if (Lizzie.leelaz.isTuning)
+    else if (Lizzie.leelaz != null && Lizzie.leelaz.isTuning)
       return Lizzie.resourceBundle.getString("LizzieFrame.display.tuning");
     else return Lizzie.resourceBundle.getString("LizzieFrame.display.loading");
   }
@@ -5502,7 +5500,7 @@ public class LizzieFrame extends JFrame {
     boolean isKataStyle = false;
     if (curData.isKataData
         || curData.isSaiData
-        || (Lizzie.leelaz.isKatago && !EngineManager.isEmpty)
+        || (!EngineManager.isEmpty && Lizzie.leelaz != null && Lizzie.leelaz.isKatago)
         || (EngineManager.isEngineGame
             && (Lizzie.engineManager.engineList.get(EngineManager.engineGameInfo.blackEngineIndex)
                     .isKatago
@@ -5533,7 +5531,7 @@ public class LizzieFrame extends JFrame {
                 + String.format(Locale.ENGLISH, "%.1f", scoreStdev)
                 + " ";
     }
-    if (Lizzie.leelaz.isColorEngine) {
+    if (Lizzie.leelaz != null && Lizzie.leelaz.isColorEngine) {
       // "阶段:""贴目:"
       text =
           text
@@ -5707,7 +5705,8 @@ public class LizzieFrame extends JFrame {
                   .usingSpecificRules
               > 0) return true;
     }
-    if (Lizzie.leelaz.isKatago && Lizzie.leelaz.usingSpecificRules > 0) return true;
+    if (Lizzie.leelaz != null && Lizzie.leelaz.isKatago && Lizzie.leelaz.usingSpecificRules > 0)
+      return true;
     return false;
   }
 
@@ -5984,7 +5983,7 @@ public class LizzieFrame extends JFrame {
               : Lizzie.engineManager.engineList.get(EngineManager.engineGameInfo.whiteEngineIndex);
     else leela = Lizzie.leelaz;
     // ||(Lizzie.engineManager.isEngineGame&&Lizzie.engineManager.engineGameInfo.isGenmove)
-    if (leela.isKatago && !EngineManager.isEmpty) {
+    if (Lizzie.leelaz != null && leela.isKatago && !EngineManager.isEmpty) {
       switch (leela.usingSpecificRules) {
         case 1:
           moveOrRules = Lizzie.resourceBundle.getString("LizzieFrame.currentRules.chinese");
@@ -7078,7 +7077,7 @@ public class LizzieFrame extends JFrame {
               Lizzie.board.getHistory().getCurrentHistoryNode().previous().get().getData().comment;
         else {
           if (Lizzie.board.getHistory().getData().comment.equals("")) {
-            if ((Lizzie.leelaz.isPondering()
+            if ((Lizzie.leelaz != null && Lizzie.leelaz.isPondering()
                     || EngineManager.isEngineGame
                     || Lizzie.frame.isPlayingAgainstLeelaz)
                 && Lizzie.config.appendWinrateToComment
@@ -11720,13 +11719,13 @@ public class LizzieFrame extends JFrame {
   }
 
   public void destroyAnalysisEngine() {
-    if (analysisEngine != null) {
-      if (analysisEngine.useJavaSSH) analysisEngine.javaSSH.close();
-      else if (analysisEngine.process != null && analysisEngine.process.isAlive()) {
-        analysisEngine.isNormalEnd = true;
-        analysisEngine.process.destroyForcibly();
-      }
-    }
+    //    if (analysisEngine != null) {
+    //      if (analysisEngine.useJavaSSH) analysisEngine.javaSSH.close();
+    //      else if (analysisEngine.process != null && analysisEngine.process.isAlive()) {
+    //        analysisEngine.isNormalEnd = true;
+    //        analysisEngine.process.destroyForcibly();
+    //      }
+    //    }
   }
 
   public void flashAnalyzeGameBatch(int firstMove, int lastMove) {
@@ -11784,25 +11783,25 @@ public class LizzieFrame extends JFrame {
   }
 
   public void flashAnalyzeGame(boolean isAllGame) {
-    Lizzie.config.analysisRecentIsPartGame = isAllGame;
-    if (analysisEngine == null
-        || analysisEngine.useJavaSSH && analysisEngine.javaSSHClosed
-        || (!analysisEngine.useJavaSSH
-            && (analysisEngine.process == null || !analysisEngine.process.isAlive()))) {
-      try {
-        analysisEngine = new AnalysisEngine(false);
-        analysisEngine.sendRequest(
-            isAllGame ? -1 : Lizzie.config.analysisStartMove,
-            isAllGame ? -1 : Lizzie.config.analysisEndMove);
-      } catch (IOException e) {
-        // TODO Auto-generated catch block
-        e.printStackTrace();
-      }
-    } else {
-      analysisEngine.sendRequest(
-          isAllGame ? -1 : Lizzie.config.analysisStartMove,
-          isAllGame ? -1 : Lizzie.config.analysisEndMove);
-    }
+    //    Lizzie.config.analysisRecentIsPartGame = isAllGame;
+    //    if (analysisEngine == null
+    //        || analysisEngine.useJavaSSH && analysisEngine.javaSSHClosed
+    //        || (!analysisEngine.useJavaSSH
+    //            && (analysisEngine.process == null || !analysisEngine.process.isAlive()))) {
+    //      try {
+    //        analysisEngine = new AnalysisEngine(false);
+    //        analysisEngine.sendRequest(
+    //            isAllGame ? -1 : Lizzie.config.analysisStartMove,
+    //            isAllGame ? -1 : Lizzie.config.analysisEndMove);
+    //      } catch (IOException e) {
+    //        // TODO Auto-generated catch block
+    //        e.printStackTrace();
+    //      }
+    //    } else {
+    //      analysisEngine.sendRequest(
+    //          isAllGame ? -1 : Lizzie.config.analysisStartMove,
+    //          isAllGame ? -1 : Lizzie.config.analysisEndMove);
+    //    }
   }
 
   public void flashAnalyzePart() {
@@ -11988,17 +11987,17 @@ public class LizzieFrame extends JFrame {
 
   public void destroyEstimateEngine() {
     // TODO Auto-generated method stub
-    if (zen != null) {
-      zen.isNormalEnd = true;
-      if (zen.useJavaSSH) {
-        if (!zen.javaSSHClosed) zen.javaSSH.close();
-      } else if (Lizzie.frame.zen.process != null && Lizzie.frame.zen.process.isAlive()) {
-        try {
-          Lizzie.frame.zen.process.destroy();
-        } catch (Exception e) {
-        }
-      }
-    }
+    //    if (zen != null) {
+    //      zen.isNormalEnd = true;
+    //      if (zen.useJavaSSH) {
+    //        if (!zen.javaSSHClosed) zen.javaSSH.close();
+    //      } else if (Lizzie.frame.zen.process != null && Lizzie.frame.zen.process.isAlive()) {
+    //        try {
+    //          Lizzie.frame.zen.process.destroy();
+    //        } catch (Exception e) {
+    //        }
+    //      }
+    //    }
   }
 
   public static void openSuggestionInfoCustom(Window owner) {

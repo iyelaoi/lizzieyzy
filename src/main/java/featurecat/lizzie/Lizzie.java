@@ -1,38 +1,30 @@
 package featurecat.lizzie;
 
-import featurecat.lizzie.analysis.AnalysisEngine;
 import featurecat.lizzie.analysis.EngineManager;
-import featurecat.lizzie.analysis.KataEstimate;
 import featurecat.lizzie.analysis.Leelaz;
 import featurecat.lizzie.gui.AwareScaled;
 import featurecat.lizzie.gui.FirstUseSettings;
 import featurecat.lizzie.gui.GtpConsolePane;
 import featurecat.lizzie.gui.LizzieFrame;
 import featurecat.lizzie.gui.LoadEngine;
-import featurecat.lizzie.gui.Message;
-import featurecat.lizzie.gui.SocketCheckVersion;
 import featurecat.lizzie.rules.Board;
 import featurecat.lizzie.util.MultiOutputStream;
 import featurecat.lizzie.util.Utils;
 import java.awt.Font;
 import java.awt.FontFormatException;
 import java.awt.Window;
-import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.PrintStream;
 import java.net.InetAddress;
-import java.text.SimpleDateFormat;
-import java.util.Date;
 import java.util.Locale;
 import java.util.ResourceBundle;
 import javax.swing.*;
 import javax.swing.plaf.FontUIResource;
-import org.json.JSONException;
 
 /** Main class. */
 public class Lizzie {
-  public static Leelaz leelaz = new Leelaz("");
+  public static Leelaz leelaz;
   public static ResourceBundle resourceBundle = ResourceBundle.getBundle("l10n.DisplayStrings");
   public static Config config;
   public static GtpConsolePane gtpConsole;
@@ -209,99 +201,88 @@ public class Lizzie {
     frame.reSetLoc();
     frame.showMainPanel();
     frame.addResizeLis();
-    SwingUtilities.invokeLater(
-        new Thread() {
-          public void run() {
-            if (mainArgs.length == 1) {
-              if (!mainArgs[0].equals("read")) {
-                File file = new File(mainArgs[0]);
-                frame.loadFile(file, true, true);
-                LizzieFrame.curFile = file;
-              }
-            } else if (config.autoResume) {
-              frame.resumeFile();
-            }
-            Lizzie.frame.setMainPanelFocus();
-          }
-        });
+    //    SwingUtilities.invokeLater(
+    //        new Thread() {
+    //          public void run() {
+    //            if (mainArgs.length == 1) {
+    //              if (!mainArgs[0].equals("read")) {
+    //                File file = new File(mainArgs[0]);
+    //                frame.loadFile(file, true, true);
+    //                LizzieFrame.curFile = file;
+    //              }
+    //            } else if (config.autoResume) {
+    //              frame.resumeFile();
+    //            }
+    //            Lizzie.frame.setMainPanelFocus();
+    //          }
+    //        });
     gtpConsole = new GtpConsolePane(frame);
     gtpConsole.setVisible(config.persistedUi.optBoolean("gtp-console-opened", false));
     frame.setVisible(true);
     SwingUtilities.invokeLater(
         new Thread() {
           public void run() {
-            if (config.isShowingIndependentMain) frame.openIndependentMainBoard();
-            if (config.isShowingIndependentSub) frame.openIndependentSubBoard();
-            try {
-              Thread.sleep(60);
-            } catch (InterruptedException e2) {
-              // TODO Auto-generated catch block
-              e2.printStackTrace();
-            }
-            try {
-              Lizzie.engineManager = new EngineManager(Lizzie.config, index);
-            } catch (Exception e) {
-              try {
-                Message msg = new Message();
-                msg.setMessage(resourceBundle.getString("Lizzie.engineFailed"));
-                //  msg.setVisible(true);
-                Lizzie.engineManager = new EngineManager(Lizzie.config, -1);
-                //  frame.refresh();
-              } catch (JSONException e1) {
-                // TODO Auto-generated catch block
-                e1.printStackTrace();
-              } catch (IOException e1) {
-                // TODO Auto-generated catch block
-                e1.printStackTrace();
-              }
-            }
-            if (Lizzie.config.saveBoardConfig.optInt("save-auto-game-index2", -1) == -5) {
-              Lizzie.config.saveBoardConfig.put("save-auto-game-index1", 1);
-              File file = new File("save\\autoGame1.bmp");
-              if (file.exists() && file.isFile()) file.delete();
-              File file2 = new File("save\\autoGame1.sgf");
-              if (file2.exists() && file2.isFile()) file2.delete();
-              File oldfile = new File("save\\autoGame2.bmp");
-              File newfile = new File("save\\autoGame1.bmp");
-              if (oldfile.exists()) {
-                oldfile.renameTo(newfile);
-              }
-              File oldfile2 = new File("save\\autoGame2.sgf");
-              File newfile2 = new File("save\\autoGame1.sgf");
-              if (oldfile2.exists()) {
-                oldfile2.renameTo(newfile2);
-              }
-            }
+            //            if (config.isShowingIndependentMain) frame.openIndependentMainBoard();
+            //            if (config.isShowingIndependentSub) frame.openIndependentSubBoard();
+            //            try {
+            //              Thread.sleep(60);
+            //            } catch (InterruptedException e2) {
+            //              // TODO Auto-generated catch block
+            //              e2.printStackTrace();
+            //            }
 
-            Runnable runnable2 =
-                new Runnable() {
-                  public void run() {
-                    if (Lizzie.config.loadEstimateEngine) {
-                      try {
-                        frame.zen = new KataEstimate(true);
-                      } catch (IOException e1) {
-                        e1.printStackTrace();
-                      }
-                    }
-                    if (Lizzie.config.analysisEnginePreLoad) {
-                      try {
-                        frame.analysisEngine = new AnalysisEngine(true);
-                      } catch (IOException e) {
-                        // TODO Auto-generated catch block
-                        e.printStackTrace();
-                      }
-                    }
-                    if (config.autoCheckVersion) {
-                      String date = new SimpleDateFormat("yyyyMMdd").format(new Date());
-                      if (!config.autoCheckDate.equals(date)) {
-                        SocketCheckVersion socketCheckVersion = new SocketCheckVersion();
-                        socketCheckVersion.SocketCheckVersion(true);
-                      }
-                    }
-                  }
-                };
-            Thread thread2 = new Thread(runnable2);
-            thread2.start();
+            Lizzie.engineManager = new EngineManager(Lizzie.config, index);
+
+            //            if (Lizzie.config.saveBoardConfig.optInt("save-auto-game-index2", -1) ==
+            // -5) {
+            //              Lizzie.config.saveBoardConfig.put("save-auto-game-index1", 1);
+            //              File file = new File("save\\autoGame1.bmp");
+            //              if (file.exists() && file.isFile()) file.delete();
+            //              File file2 = new File("save\\autoGame1.sgf");
+            //              if (file2.exists() && file2.isFile()) file2.delete();
+            //              File oldfile = new File("save\\autoGame2.bmp");
+            //              File newfile = new File("save\\autoGame1.bmp");
+            //              if (oldfile.exists()) {
+            //                oldfile.renameTo(newfile);
+            //              }
+            //              File oldfile2 = new File("save\\autoGame2.sgf");
+            //              File newfile2 = new File("save\\autoGame1.sgf");
+            //              if (oldfile2.exists()) {
+            //                oldfile2.renameTo(newfile2);
+            //              }
+            //            }
+            //
+            //            Runnable runnable2 =
+            //                new Runnable() {
+            //                  public void run() {
+            //                    if (Lizzie.config.loadEstimateEngine) {
+            //                      try {
+            //                        frame.zen = new KataEstimate(true);
+            //                      } catch (IOException e1) {
+            //                        e1.printStackTrace();
+            //                      }
+            //                    }
+            //                    if (Lizzie.config.analysisEnginePreLoad) {
+            //                      try {
+            //                        frame.analysisEngine = new AnalysisEngine(true);
+            //                      } catch (IOException e) {
+            //                        // TODO Auto-generated catch block
+            //                        e.printStackTrace();
+            //                      }
+            //                    }
+            //                    if (config.autoCheckVersion) {
+            //                      String date = new SimpleDateFormat("yyyyMMdd").format(new
+            // Date());
+            //                      if (!config.autoCheckDate.equals(date)) {
+            //                        SocketCheckVersion socketCheckVersion = new
+            // SocketCheckVersion();
+            //                        socketCheckVersion.SocketCheckVersion(true);
+            //                      }
+            //                    }
+            //                  }
+            //                };
+            //            Thread thread2 = new Thread(runnable2);
+            //            thread2.start();
           }
         });
   }

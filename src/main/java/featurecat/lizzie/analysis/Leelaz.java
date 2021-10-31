@@ -1,6 +1,7 @@
 package featurecat.lizzie.analysis;
 
 import featurecat.lizzie.Lizzie;
+import featurecat.lizzie.analysis.Leelaz.WriterThread;
 import featurecat.lizzie.gui.EngineData;
 import featurecat.lizzie.gui.EngineFailedMessage;
 import featurecat.lizzie.gui.JFontCheckBox;
@@ -12,17 +13,16 @@ import featurecat.lizzie.rules.BoardData;
 import featurecat.lizzie.rules.Stone;
 import featurecat.lizzie.util.Utils;
 import java.awt.Component;
+import java.io.BufferedInputStream;
 import java.io.BufferedOutputStream;
-import java.io.BufferedReader;
-import java.io.File;
 import java.io.IOException;
-import java.io.InputStreamReader;
 import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
 import java.util.Optional;
 import java.util.Random;
+import java.util.StringTokenizer;
 import java.util.Timer;
 import java.util.TimerTask;
 import java.util.concurrent.Executors;
@@ -55,9 +55,10 @@ public class Leelaz {
 
   private Process process;
 
-  private BufferedReader inputStream;
+  private BufferedInputStream inputStream;
   private BufferedOutputStream outputStream;
-  private BufferedReader errorStream;
+  //  private BufferedReader errorStream;
+  private WriterThread writerThread;
 
   // public Board board;
   private List<MoveData> bestMoves;
@@ -112,7 +113,7 @@ public class Leelaz {
   // public boolean switching = false;
   private int currentEngineN = -1;
   private ScheduledExecutorService executor;
-  private ScheduledExecutorService executorErr;
+  //  private ScheduledExecutorService executorErr;
   ArrayList<Double> tempcount = new ArrayList<Double>();
   // dynamic komi and opponent komi as reported by dynamic-komi version of leelaz
   //	private float dynamicKomi = Float.NaN;
@@ -206,7 +207,7 @@ public class Leelaz {
   public String password;
   public boolean useKeyGen;
   public String keyGenPath;
-  public SSHController javaSSH;
+  // public SSHController javaSSH;
   private boolean stopByLimit = false;
   public boolean stopByPlayouts = false;
   public boolean outOfPlayoutsLimit = false;
@@ -311,60 +312,64 @@ public class Leelaz {
     canAddPlayer = false;
     currentEngineN = index;
     canRestoreDymPda = false;
-    commands = Utils.splitCommand(engineCommand);
+    commands = splitCommand(engineCommand);
     pda = 0;
     // Get weight name
     //	Pattern wPattern = Pattern.compile("(?s).*?(--weights |-w |-model )([^'\" ]+)(?s).*");
     // Matcher wMatcher = wPattern.matcher(engineCommand);
     currentEnginename = getEngineName(index);
     isDownWithError = false;
-    if (this.useJavaSSH) {
-      process = null;
-      this.javaSSH = new SSHController(this, this.ip, this.port);
-      boolean loginStatus = false;
-      if (this.useKeyGen) {
-        loginStatus =
-            this.javaSSH
-                .loginByFileKey(this.engineCommand, this.userName, new File(this.keyGenPath))
-                .booleanValue();
-      } else {
-        loginStatus =
-            this.javaSSH.login(this.engineCommand, this.userName, this.password).booleanValue();
-      }
-      if (loginStatus) {
-        this.javaSSHClosed = false;
-        this.inputStream = new BufferedReader(new InputStreamReader(this.javaSSH.getStdout()));
-        this.outputStream = new BufferedOutputStream(this.javaSSH.getStdin());
-        this.errorStream = new BufferedReader(new InputStreamReader(this.javaSSH.getSterr()));
-      } else {
-        isDownWithError = true;
-        return;
-      }
-    } else {
-      ProcessBuilder processBuilder = new ProcessBuilder(commands);
-      //   processBuilder.redirectErrorStream(false);
+    //    if (this.useJavaSSH) {
+    //      process = null;
+    //      this.javaSSH = new SSHController(this, this.ip, this.port);
+    //      boolean loginStatus = false;
+    //      if (this.useKeyGen) {
+    //        loginStatus =
+    //            this.javaSSH
+    //                .loginByFileKey(this.engineCommand, this.userName, new File(this.keyGenPath))
+    //                .booleanValue();
+    //      } else {
+    //        loginStatus =
+    //            this.javaSSH.login(this.engineCommand, this.userName,
+    // this.password).booleanValue();
+    //      }
+    //      if (loginStatus) {
+    //        this.javaSSHClosed = false;
+    //        this.inputStream = new BufferedReader(new
+    // InputStreamReader(this.javaSSH.getStdout()));
+    //        this.outputStream = new BufferedOutputStream(this.javaSSH.getStdin());
+    //        this.errorStream = new BufferedReader(new InputStreamReader(this.javaSSH.getSterr()));
+    //      } else {
+    //        isDownWithError = true;
+    //        return;
+    //      }
+    //    } else {
+    ProcessBuilder processBuilder = new ProcessBuilder(commands);
+    //   processBuilder.redirectErrorStream(false);
+    try {
+      process = processBuilder.start(); // Runtime.getRuntime().exec(engineCommand); //
+    } catch (IOException e) {
+      String err = e.getLocalizedMessage();
       try {
-        process = processBuilder.start(); // Runtime.getRuntime().exec(engineCommand); //
-      } catch (IOException e) {
-        String err = e.getLocalizedMessage();
-        try {
-          tryToDignostic(
-              Lizzie.resourceBundle.getString("Leelaz.engineFailed")
-                  + ": "
-                  + ((err == null)
-                      ? Lizzie.resourceBundle.getString("Leelaz.engineStartNoExceptionMessage")
-                      : err),
-              true);
-          LizzieFrame.openMoreEngineDialog();
-        } catch (JSONException e1) {
-          // TODO Auto-generated catch block
-          e1.printStackTrace();
-          isDownWithError = true;
-        }
-        return;
+        tryToDignostic(
+            Lizzie.resourceBundle.getString("Leelaz.engineFailed")
+                + ": "
+                + ((err == null)
+                    ? Lizzie.resourceBundle.getString("Leelaz.engineStartNoExceptionMessage")
+                    : err),
+            true);
+        LizzieFrame.openMoreEngineDialog();
+      } catch (JSONException e1) {
+        // TODO Auto-generated catch block
+        e1.printStackTrace();
+        isDownWithError = true;
       }
-      initializeStreams();
+      return;
     }
+    initializeStreams();
+    startWriterThread();
+
+    //  }
     // Send a version request to check that we have a supported version
     // Response handled in parseLine
     isCheckingVersion = true;
@@ -422,10 +427,10 @@ public class Leelaz {
     // new Thread(this::read).start();
     // can stop engine for switching weights
     executor = Executors.newSingleThreadScheduledExecutor();
-    isNormalEnd = false;
     executor.execute(this::read);
-    executorErr = Executors.newSingleThreadScheduledExecutor();
-    executorErr.execute(this::readError);
+    //    executorErr = Executors.newSingleThreadScheduledExecutor();
+    //    executorErr.execute(this::readError);
+    isNormalEnd = false;
     started = true;
 
     if (Lizzie.leelaz2 != null && this == Lizzie.leelaz2) {
@@ -499,22 +504,23 @@ public class Leelaz {
     //		if(isScreen)
     //			sendCommand("name");
     sendCommand("quit");
-    if (this.useJavaSSH) {
-      javaSSH.close();
-    } else {
-      executor.shutdown();
-      try {
-        while (!executor.awaitTermination(1, TimeUnit.SECONDS)) {
-          executor.shutdownNow();
-        }
-        if (executor.awaitTermination(1, TimeUnit.SECONDS)) {
-          shutdown();
-        }
-      } catch (InterruptedException e) {
+    // if (this.useJavaSSH) {
+    //   javaSSH.close();
+    // } else {
+    executor.shutdown();
+    try {
+      while (!executor.awaitTermination(1, TimeUnit.SECONDS)) {
         executor.shutdownNow();
-        Thread.currentThread().interrupt();
       }
+      if (executor.awaitTermination(1, TimeUnit.SECONDS)) {
+        shutdown();
+      }
+    } catch (InterruptedException e) {
+      executor.shutdownNow();
+      Thread.currentThread().interrupt();
     }
+    //  }
+    stopWriterThread();
     started = false;
     isLoaded = false;
   }
@@ -531,14 +537,14 @@ public class Leelaz {
       if (currentEngineN > 20) LizzieFrame.menu.changeEngineIcon(20, 0);
       else LizzieFrame.menu.changeEngineIcon(currentEngineN, 0);
     }
-    if (this.useJavaSSH) {
-      javaSSH.close();
-    } else {
-      try {
-        process.destroyForcibly();
-      } catch (Exception e) {
-      }
+    //   if (this.useJavaSSH) {
+    //    javaSSH.close();
+    //  } else {
+    try {
+      process.destroyForcibly();
+    } catch (Exception e) {
     }
+    //  }
     started = false;
     isLoaded = false;
     outputStream = null;
@@ -546,9 +552,9 @@ public class Leelaz {
 
   /** Initializes the input and output streams */
   public void initializeStreams() {
-    inputStream = new BufferedReader(new InputStreamReader(process.getInputStream()));
+    inputStream = new BufferedInputStream(process.getInputStream());
     outputStream = new BufferedOutputStream(process.getOutputStream());
-    errorStream = new BufferedReader(new InputStreamReader(process.getErrorStream()));
+    //  errorStream = new BufferedReader(new InputStreamReader(process.getErrorStream()));
   }
 
   public List<MoveData> parseInfoSai(String line) {
@@ -867,9 +873,10 @@ public class Leelaz {
         } else {
           //	try {
           Optional<int[]> coords;
-          if (isPassingLose) {
-            coords = Board.asCoordinates(inputStream.readLine());
-          } else coords = Board.asCoordinates(params[1]);
+          //          if (isPassingLose) {
+          //            coords = Board.asCoordinates(inputStream.readLine());
+          //          } else
+          coords = Board.asCoordinates(params[1]);
           if (!coords.isPresent()) {
             return;
           }
@@ -1244,11 +1251,12 @@ public class Leelaz {
           else {
             nameCmdfornoponder();
           }
-          if (Lizzie.frame.isAutocounting) {
-            String command =
-                "play " + (Lizzie.board.getHistory().isBlacksTurn() ? "w " : "b ") + params[1];
-            Lizzie.frame.zen.sendAndEstimate(command, false);
-          }
+          //          if (Lizzie.frame.isAutocounting) {
+          //            String command =
+          //                "play " + (Lizzie.board.getHistory().isBlacksTurn() ? "w " : "b ") +
+          // params[1];
+          //          //  Lizzie.frame.zen.sendAndEstimate(command, false);
+          //          }
         }
         if (Lizzie.frame.isPlayingAgainstLeelaz && isResponseUpToDate()) {
           if (params.length > 1) {
@@ -1288,11 +1296,12 @@ public class Leelaz {
               LizzieFrame.menu.toggleEngineMenuStatus(false, false);
             }
           }
-          if (Lizzie.frame.isAutocounting) {
-            String command =
-                "play " + (Lizzie.board.getHistory().isBlacksTurn() ? "w " : "b ") + params[1];
-            Lizzie.frame.zen.sendAndEstimate(command, false);
-          }
+          //          if (Lizzie.frame.isAutocounting) {
+          //            String command =
+          //                "play " + (Lizzie.board.getHistory().isBlacksTurn() ? "w " : "b ") +
+          // params[1];
+          //    //        Lizzie.frame.zen.sendAndEstimate(command, false);
+          //          }
           if (!Lizzie.config.playponder) Lizzie.leelaz.nameCmdfornoponder();
         }
         if (!isInputCommand && params.length == 2) {
@@ -1318,11 +1327,12 @@ public class Leelaz {
           Lizzie.board.place(params[1]);
           if (isPondering) ponder();
           else this.nameCmdfornoponder();
-          if (Lizzie.frame.isAutocounting) {
-            String command =
-                "play " + (Lizzie.board.getHistory().isBlacksTurn() ? "w " : "b ") + params[1];
-            Lizzie.frame.zen.sendAndEstimate(command, false);
-          }
+          //          if (Lizzie.frame.isAutocounting) {
+          //            String command =
+          //                "play " + (Lizzie.board.getHistory().isBlacksTurn() ? "w " : "b ") +
+          // params[1];
+          //       //     Lizzie.frame.zen.sendAndEstimate(command, false);
+          //          }
           isInputCommand = false;
           isThinking = false;
         }
@@ -1356,11 +1366,12 @@ public class Leelaz {
           if (isInputCommand) {
             Lizzie.board.place(params[1]);
             togglePonder();
-            if (Lizzie.frame.isAutocounting) {
-              String command =
-                  "play " + (Lizzie.board.getHistory().isBlacksTurn() ? "w " : "b ") + params[1];
-              Lizzie.frame.zen.sendAndEstimate(command, false);
-            }
+            //            if (Lizzie.frame.isAutocounting) {
+            //              String command =
+            //                  "play " + (Lizzie.board.getHistory().isBlacksTurn() ? "w " : "b ") +
+            // params[1];
+            //        //      Lizzie.frame.zen.sendAndEstimate(command, false);
+            //            }
           }
           if (Lizzie.frame.isPlayingAgainstLeelaz && isResponseUpToDate()) {
             if (params[1].startsWith("resign")) {
@@ -1394,11 +1405,12 @@ public class Leelaz {
               Lizzie.board.place(params[1]);
               LizzieFrame.menu.toggleEngineMenuStatus(false, false);
             }
-            if (Lizzie.frame.isAutocounting) {
-              String command =
-                  "play " + (Lizzie.board.getHistory().isBlacksTurn() ? "w " : "b ") + params[1];
-              Lizzie.frame.zen.sendAndEstimate(command, false);
-            }
+            //            if (Lizzie.frame.isAutocounting) {
+            //              String command =
+            //                  "play " + (Lizzie.board.getHistory().isBlacksTurn() ? "w " : "b ") +
+            // params[1];
+            //        //      Lizzie.frame.zen.sendAndEstimate(command, false);
+            //            }
             if (!Lizzie.config.playponder) Lizzie.leelaz.nameCmdfornoponder();
           }
           isThinking = false;
@@ -1992,21 +2004,21 @@ public class Leelaz {
     else sendCommand("name");
   }
 
-  private void readError() {
-    String line = "";
-    try {
-      while ((line = errorStream.readLine()) != null) {
-        try {
-          parseLineForError(line);
-        } catch (Exception e) {
-          e.printStackTrace();
-        }
-      }
-    } catch (IOException e) {
-      // TODO Auto-generated catch block
-      e.printStackTrace();
-    }
-  }
+  //  private void readError() {
+  //    String line = null;
+  //    try {
+  //      while ((line = errorStream.readLine()) != null) {
+  //        try {
+  //          parseLineForError(line);
+  //        } catch (Exception e) {
+  //          e.printStackTrace();
+  //        }
+  //      }
+  //    } catch (IOException e) {
+  //      // TODO Auto-generated catch block
+  //      e.printStackTrace();
+  //    }
+  //  }
 
   private void parseLineForError(String line) {
     // TODO Auto-generated method stub
@@ -2350,107 +2362,113 @@ public class Leelaz {
   /** Continually reads and processes output from leelaz */
   private void read() {
     try {
-      String line = "";
-      while ((line = inputStream.readLine()) != null) {
-        if (getRcentLine) {
-          if (line.startsWith("= {")) {
-            recentRulesLine = line;
-            Lizzie.config.currentKataGoRules = line;
-            getSuicidalAndRules();
-            getRcentLine = false;
-          } else if (line.startsWith("=")) {
-            String[] params = line.trim().split(" ");
-            if (params.length == 2) {
-              try {
-                if (recentLineNumber == 0) {
-                  this.pda = Double.parseDouble(params[1]);
-                } else if (recentLineNumber == 1) {
-                  wrn = Double.parseDouble(params[1]);
-                  Lizzie.frame.setPdaAndWrn(pda, wrn);
+      int c;
+      StringBuilder lineBuilder = new StringBuilder();
+      while ((c = inputStream.read()) != -1) {
+        lineBuilder.append((char) c);
+        if ((c == '\n')) {
+          String line = lineBuilder.toString();
+          lineBuilder = new StringBuilder();
+          if (getRcentLine) {
+            if (line.startsWith("= {")) {
+              recentRulesLine = line;
+              Lizzie.config.currentKataGoRules = line;
+              getSuicidalAndRules();
+              getRcentLine = false;
+            } else if (line.startsWith("=")) {
+              String[] params = line.trim().split(" ");
+              if (params.length == 2) {
+                try {
+                  if (recentLineNumber == 0) {
+                    this.pda = Double.parseDouble(params[1]);
+                  } else if (recentLineNumber == 1) {
+                    wrn = Double.parseDouble(params[1]);
+                    Lizzie.frame.setPdaAndWrn(pda, wrn);
+                    recentLineNumber++;
+                  }
                   recentLineNumber++;
+                } catch (NumberFormatException e) {
                 }
-                recentLineNumber++;
-              } catch (NumberFormatException e) {
               }
             }
           }
-        }
-        if (EngineManager.isEngineGame && EngineManager.engineGameInfo.isGenmove && isLoaded) {
-          try {
-            parseLineForGenmovePk(line);
-          } catch (Exception e) {
-            e.printStackTrace();
-          }
+          if (EngineManager.isEngineGame && EngineManager.engineGameInfo.isGenmove && isLoaded) {
+            try {
+              parseLineForGenmovePk(line);
+            } catch (Exception e) {
+              e.printStackTrace();
+            }
 
-        } else {
-          if (startGetCommandList) {
-            String cmd = line.trim();
-            if (!cmd.equals("") && !cmd.equals("=")) commandLists.add(cmd);
+          } else {
+            if (startGetCommandList) {
+              String cmd = line.trim();
+              if (!cmd.equals("") && !cmd.equals("=")) commandLists.add(cmd);
+            }
+            try {
+              parseLine(line);
+            } catch (Exception e) {
+              e.printStackTrace();
+            }
           }
-          try {
-            parseLine(line);
-          } catch (Exception e) {
-            e.printStackTrace();
-          }
-        }
-        if (isCommandLine) {
-          if (!this.isKatago && !this.isLeela0110 && Lizzie.frame.isPlayingAgainstLeelaz) {
-            Runnable runnable =
-                new Runnable() {
-                  public void run() {
-                    try {
-                      while (!isResponseUpToDate()) Thread.sleep(10);
-                    } catch (InterruptedException e) {
-                      // TODO Auto-generated catch block
-                      e.printStackTrace();
+          if (isCommandLine) {
+            if (!this.isKatago && !this.isLeela0110 && Lizzie.frame.isPlayingAgainstLeelaz) {
+              Runnable runnable =
+                  new Runnable() {
+                    public void run() {
+                      try {
+                        while (!isResponseUpToDate()) Thread.sleep(10);
+                      } catch (InterruptedException e) {
+                        // TODO Auto-generated catch block
+                        e.printStackTrace();
+                      }
+                      if (Lizzie.board.getHistory().getCurrentHistoryNode().previous().isPresent()
+                          && !bestMovesPrevious.isEmpty()) {
+                        Lizzie.board
+                            .getHistory()
+                            .getCurrentHistoryNode()
+                            .previous()
+                            .get()
+                            .getData()
+                            .tryToSetBestMoves(
+                                bestMovesPrevious,
+                                bestMovesEnginename,
+                                true,
+                                MoveData.getPlayouts(bestMovesPrevious));
+                        bestMovesPrevious = new ArrayList<>();
+                      }
+                      canGetSummaryInfo = false;
                     }
-                    if (Lizzie.board.getHistory().getCurrentHistoryNode().previous().isPresent()
-                        && !bestMovesPrevious.isEmpty()) {
-                      Lizzie.board
-                          .getHistory()
-                          .getCurrentHistoryNode()
-                          .previous()
-                          .get()
-                          .getData()
-                          .tryToSetBestMoves(
-                              bestMovesPrevious,
-                              bestMovesEnginename,
-                              true,
-                              MoveData.getPlayouts(bestMovesPrevious));
-                      bestMovesPrevious = new ArrayList<>();
-                    }
-                    canGetSummaryInfo = false;
-                  }
-                };
-            Thread thread = new Thread(runnable);
-            thread.start();
-          }
-          currentCmdNum++;
+                  };
+              Thread thread = new Thread(runnable);
+              thread.start();
+            }
+            currentCmdNum++;
 
-          //						if(isModifying&&isResponseUpToDate())
-          //							setModifyEnd();
-          if (currentCmdNum > cmdNumber - 1) currentCmdNum = cmdNumber - 1;
-          try {
-            trySendCommandFromQueue();
-          } catch (Exception e) {
-            e.printStackTrace();
+            //						if(isModifying&&isResponseUpToDate())
+            //							setModifyEnd();
+            if (currentCmdNum > cmdNumber - 1) currentCmdNum = cmdNumber - 1;
+            try {
+              trySendCommandFromQueue();
+            } catch (Exception e) {
+              e.printStackTrace();
+            }
           }
+          isCommandLine = false;
+          // line = new StringBuilder();
+          //					if(isInfoLine)
+          //					{
+          //						if (!this.bestMoves.isEmpty()) {
+          //							  notifyAutoPK();
+          //				        	  notifyAutoPlay();
+          //						}
+          //					}
+
+          //	isInfoLine=false;
+          // }
+          //				else if (c == '='||c=='?') {
+          //					isCommandLine = true;
+          //				}
         }
-        isCommandLine = false;
-        // line = new StringBuilder();
-        //					if(isInfoLine)
-        //					{
-        //						if (!this.bestMoves.isEmpty()) {
-        //							  notifyAutoPK();
-        //				        	  notifyAutoPlay();
-        //						}
-        //					}
-
-        //	isInfoLine=false;
-        // }
-        //				else if (c == '='||c=='?') {
-        //					isCommandLine = true;
-        //				}
       }
       // this line will be reached when engine shuts down
       System.out.println("engine process ended.");
@@ -2568,7 +2586,7 @@ public class Leelaz {
       trySendCommandFromQueue();
     }
     if (Lizzie.frame.isAutocounting) {
-      Lizzie.frame.zen.sendAndEstimate(command, true);
+      //   Lizzie.frame.zen.sendAndEstimate(command, true);
     }
     if (Lizzie.config.isDoubleEngineMode()) {
       if (Lizzie.leelaz2 != null && this != Lizzie.leelaz2) {
@@ -2628,7 +2646,7 @@ public class Leelaz {
       trySendCommandFromQueue();
     }
     if (Lizzie.frame.isAutocounting) {
-      Lizzie.frame.zen.sendAndEstimate(command, true);
+      //  Lizzie.frame.zen.sendAndEstimate(command, true);
     }
     if (canSetNotPlayed) {
       canSetNotPlayed = false;
@@ -2672,23 +2690,17 @@ public class Leelaz {
   private void sendCommandToLeelaz(String command) {
     if (command.startsWith("fixed_handicap")
         || (isKatago && command.startsWith("place_free_handicap"))) isSettingHandicap = true;
-    if (outputStream != null) {
-      try {
-        outputStream.write((command + "\n").getBytes());
-        outputStream.flush();
-      } catch (Exception e) {
-        // e.printStackTrace();
-      }
-      if (Lizzie.engineManager.isEngineGame()) {
-        Lizzie.gtpConsole.addCommandForEngineGame(
-            command,
-            cmdNumber,
-            oriEnginename,
-            EngineManager.engineGameInfo.isBlackEngine(currentEngineN()));
+    sendToWriterThread(command + "\n");
+    if (Lizzie.engineManager.isEngineGame()) {
+      Lizzie.gtpConsole.addCommandForEngineGame(
+          command,
+          cmdNumber,
+          oriEnginename,
+          EngineManager.engineGameInfo.isBlackEngine(currentEngineN()));
 
-      } else if (Lizzie.config.alwaysGtp || Lizzie.gtpConsole.isVisible())
-        Lizzie.gtpConsole.addCommand(command, cmdNumber, oriEnginename);
-    }
+    } else if (Lizzie.config.alwaysGtp || Lizzie.gtpConsole.isVisible())
+      Lizzie.gtpConsole.addCommand(command, cmdNumber, oriEnginename);
+
     if (canSetNotPlayed) {
       canSetNotPlayed = false;
       played = false;
@@ -3148,11 +3160,11 @@ public class Leelaz {
   /** End the process */
   public void shutdown() {
     leela0110StopPonder();
-    if (this.useJavaSSH) {
-      javaSSH.close();
-    } else {
-      if (process != null) process.destroy();
-    }
+    //   if (this.useJavaSSH) {
+    //     javaSSH.close();
+    //   } else {
+    if (process != null) process.destroy();
+    //   }
   }
 
   public List<MoveData> getBestMoves() {
@@ -3631,9 +3643,9 @@ public class Leelaz {
     return leela0110PonderingBoardData == Lizzie.board.getData();
   }
 
-  public Process getProcess() {
-    return process;
-  }
+  //  public Process getProcess() {
+  //    return process;
+  //  }
 
   public int getBestMovesPlayouts() {
     return currentTotalPlayouts;
@@ -3676,5 +3688,138 @@ public class Leelaz {
     sendCommand(
         "time_left " + color + " " + String.format(Locale.ENGLISH, "%.2f", seconds) + " " + moves);
     if (isDuringMove) currentCmdNum++;
+  }
+
+  private static enum ParamState {
+    NORMAL,
+    QUOTE,
+    DOUBLE_QUOTE
+  }
+
+  public List<String> splitCommand(String commandLine) {
+    if (commandLine == null || commandLine.length() == 0) {
+      return new ArrayList<String>();
+    }
+
+    final ArrayList<String> commandList = new ArrayList<String>();
+    final StringBuilder param = new StringBuilder();
+    final StringTokenizer tokens = new StringTokenizer(commandLine, " '\"", true);
+    boolean lastTokenQuoted = false;
+    ParamState state = ParamState.NORMAL;
+
+    while (tokens.hasMoreTokens()) {
+      String nextToken = tokens.nextToken();
+      switch (state) {
+        case QUOTE:
+          if ("'".equals(nextToken)) {
+            state = ParamState.NORMAL;
+            lastTokenQuoted = true;
+          } else {
+            param.append(nextToken);
+          }
+          break;
+        case DOUBLE_QUOTE:
+          if ("\"".equals(nextToken)) {
+            state = ParamState.NORMAL;
+            lastTokenQuoted = true;
+          } else {
+            param.append(nextToken);
+          }
+          break;
+        default:
+          if ("'".equals(nextToken)) {
+            state = ParamState.QUOTE;
+          } else if ("\"".equals(nextToken)) {
+            state = ParamState.DOUBLE_QUOTE;
+          } else if (" ".equals(nextToken)) {
+            if (lastTokenQuoted || param.length() != 0) {
+              commandList.add(Utils.withQuote(param.toString()));
+              param.delete(0, param.length());
+            }
+          } else {
+            param.append(nextToken);
+          }
+          lastTokenQuoted = false;
+          break;
+      }
+    }
+    if (lastTokenQuoted || param.length() != 0) {
+      commandList.add(param.toString());
+    }
+    return commandList;
+  }
+
+  class WriterThread extends Thread {
+    public ArrayDeque<String> writerQueue = new ArrayDeque<>();
+    private ArrayDeque<String> privateQueue = new ArrayDeque<>();
+    public boolean shouldStopNow = false;
+
+    public void run() {
+      // ref.
+      // https://docs.oracle.com/en/java/javase/15/docs/api/java.base/java/lang/doc-files/threadPrimitiveDeprecation.html
+      while (true) {
+        synchronized (this) {
+          while (writerQueue.isEmpty() && !shouldStopNow) {
+            try {
+              wait();
+            } catch (InterruptedException e) {
+            }
+          }
+          if (shouldStopNow) return;
+          // Note that outputStream can be stalled by massive GTP commands (#752).
+          // We move requests from writerQueue to privateQueue
+          // so that we can release the lock BEFORE using outputStream.
+          // Then other threads can send new requests to writerQueue
+          // even when writer thread is blocked in writeToStream().
+          while (!writerQueue.isEmpty()) {
+            String command = writerQueue.removeFirst();
+            privateQueue.addLast(command);
+          }
+        }
+        writeToStream();
+      }
+    }
+
+    private void writeToStream() {
+      if (outputStream != null) {
+        try {
+          while (!privateQueue.isEmpty()) {
+            String command = privateQueue.removeFirst();
+            outputStream.write(command.getBytes());
+          }
+          outputStream.flush();
+        } catch (IOException e) {
+          e.printStackTrace();
+        }
+      }
+    }
+  }
+
+  public void startWriterThread() {
+    writerThread = this.new WriterThread();
+    writerThread.start();
+  }
+
+  public void stopWriterThread() {
+    if (writerThread == null) return;
+    synchronized (writerThread) {
+      writerThread.shouldStopNow = true;
+      writerThread.notify();
+    }
+    // Wait for writer thread to notice the shouldStopNow and actually finish terminating
+    try {
+      writerThread.join();
+    } catch (InterruptedException e) {
+    }
+    // Reset it to null now that it is dead. All cleaned up
+    writerThread = null;
+  }
+
+  public void sendToWriterThread(String command) {
+    if (writerThread == null) return;
+    synchronized (writerThread) {
+      writerThread.writerQueue.addLast(command);
+      writerThread.notify();
+    }
   }
 }

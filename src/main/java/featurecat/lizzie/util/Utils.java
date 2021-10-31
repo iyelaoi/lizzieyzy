@@ -52,6 +52,29 @@ public class Utils {
   private static int msemaphoretryroom = 1;
   private static boolean alertedNoByoyomiSoundFile = false;
 
+  public static boolean needsQuoting(String s) {
+    if (isBlank(s)) {
+      return true;
+    }
+    for (int i = 0; i < s.length(); i++) {
+      switch (s.charAt(i)) {
+        case ' ':
+        case '\t':
+        case '\\':
+        case '"':
+          return true;
+      }
+    }
+    return false;
+  }
+
+  public static String withQuote(String s) {
+    if (!needsQuoting(s)) return s;
+    s = s.replaceAll("([\\\\]*)\"", "$1$1\\\\\"");
+    s = s.replaceAll("([\\\\]*)\\z", "$1$1");
+    return "\"" + s + "\"";
+  }
+
   public static Color getNoneAlphaColor(Color alphaColor) {
     return new Color(alphaColor.getRed(), alphaColor.getGreen(), alphaColor.getBlue());
   }

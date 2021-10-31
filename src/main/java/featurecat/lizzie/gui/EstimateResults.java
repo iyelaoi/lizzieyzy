@@ -136,18 +136,22 @@ public class EstimateResults extends JDialog {
           public void actionPerformed(ActionEvent e) {
             // Lizzie.frame.zen.noread = false;
 
-            if (!Lizzie.frame.isAutocounting) {
-              Lizzie.frame.isAutocounting = true;
-              Lizzie.frame.zen.syncboradstat();
-              Lizzie.frame.zen.countStones();
-              btnAuto.setText(resourceBundle.getString("EstimateResults.stopEstimate")); // "停止判断");
-            } else {
-              Lizzie.frame.clearEstimate();
-              Lizzie.frame.refresh();
-              // Lizzie.frame.iscounting=false;
-              btnAuto.setText(resourceBundle.getString("EstimateResults.autoEstimate")); // "自动判断");
-              Lizzie.frame.isAutocounting = false;
-            }
+            //            if (!Lizzie.frame.isAutocounting) {
+            //              Lizzie.frame.isAutocounting = true;
+            //              Lizzie.frame.zen.syncboradstat();
+            //              Lizzie.frame.zen.countStones();
+            //
+            // btnAuto.setText(resourceBundle.getString("EstimateResults.stopEstimate")); //
+            // "停止判断");
+            //            } else {
+            //              Lizzie.frame.clearEstimate();
+            //              Lizzie.frame.refresh();
+            //              // Lizzie.frame.iscounting=false;
+            //
+            // btnAuto.setText(resourceBundle.getString("EstimateResults.autoEstimate")); //
+            // "自动判断");
+            //              Lizzie.frame.isAutocounting = false;
+            //            }
           }
         });
     btnEstimate.addActionListener(
@@ -175,22 +179,22 @@ public class EstimateResults extends JDialog {
         new ActionListener() {
           public void actionPerformed(ActionEvent e) {
             // setSize(220,260);
-            Lizzie.config.estimateArea = !Lizzie.config.estimateArea;
-            if (Lizzie.config.estimateArea) {
-              btnArea.setText(resourceBundle.getString("EstimateResults.territory"));
-              if (!Lizzie.config.useZenEstimate)
-                Lizzie.frame.zen.sendCommand("kata-set-rules chinese");
-              // "数目模式");
-            } else {
-              btnArea.setText(resourceBundle.getString("EstimateResults.areas"));
-              if (!Lizzie.config.useZenEstimate)
-                Lizzie.frame.zen.sendCommand("kata-set-rules japanese");
-              // "数子模式");
-            }
-            Lizzie.frame.countstones(true);
-            Lizzie.frame.isCounting = true;
-            Lizzie.config.uiConfig.put("estimate-area", Lizzie.config.estimateArea);
-            repaint();
+            //            Lizzie.config.estimateArea = !Lizzie.config.estimateArea;
+            //            if (Lizzie.config.estimateArea) {
+            //              btnArea.setText(resourceBundle.getString("EstimateResults.territory"));
+            //              if (!Lizzie.config.useZenEstimate)
+            //                Lizzie.frame.zen.sendCommand("kata-set-rules chinese");
+            //              // "数目模式");
+            //            } else {
+            //              btnArea.setText(resourceBundle.getString("EstimateResults.areas"));
+            //              if (!Lizzie.config.useZenEstimate)
+            //                Lizzie.frame.zen.sendCommand("kata-set-rules japanese");
+            //              // "数子模式");
+            //            }
+            //            Lizzie.frame.countstones(true);
+            //            Lizzie.frame.isCounting = true;
+            //            Lizzie.config.uiConfig.put("estimate-area", Lizzie.config.estimateArea);
+            //            repaint();
           }
         });
     btnAuto.setBounds(0, 240, 40, 20);

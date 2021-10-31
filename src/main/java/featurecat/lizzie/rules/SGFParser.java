@@ -1044,7 +1044,7 @@ public class SGFParser {
           }
         }
       } else {
-        if (Lizzie.leelaz.isKatago && !fromAutoSave) {
+        if (Lizzie.leelaz != null && Lizzie.leelaz.isKatago && !fromAutoSave) {
           String rules = "";
           boolean usingSpecificRues = false;
           if (Lizzie.leelaz.isKatago) {

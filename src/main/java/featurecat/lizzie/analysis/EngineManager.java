@@ -12,8 +12,6 @@ import featurecat.lizzie.rules.Movelist;
 import featurecat.lizzie.rules.SGFParser;
 import featurecat.lizzie.rules.Zobrist;
 import featurecat.lizzie.util.Utils;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
 import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileOutputStream;
@@ -52,7 +50,7 @@ public class EngineManager {
   private int timeScheduledTimes;
   Timer timer;
 
-  public EngineManager(Config config, int index) throws JSONException, IOException {
+  public EngineManager(Config config, int index) {
     ArrayList<EngineData> engineData = Utils.getEngineData();
     if (index > engineData.size() - 1) {
       index = 0;
@@ -88,41 +86,33 @@ public class EngineManager {
         Lizzie.leelaz = e;
         e.preload = true;
         e.firstLoad = true;
-        new Thread() {
-          public void run() {
-            try {
-              e.startEngine(engineDt.index);
-              featurecat.lizzie.gui.Menu.engineMenu.setText(
-                  "[" + (e.currentEngineN() + 1) + "]: " + e.oriEnginename);
-            } catch (IOException e2) {
-              // TODO Auto-generated catch block
-              e2.printStackTrace();
-            }
-            while (!e.isLoaded() || e.isCheckingName) {
-              try {
-                Thread.sleep(100);
-              } catch (InterruptedException e1) {
-                // TODO Auto-generated catch block
-                e1.printStackTrace();
-              }
-            }
-            if (currentEngineNo > 20) LizzieFrame.menu.changeEngineIcon(20, 3);
-            else LizzieFrame.menu.changeEngineIcon(currentEngineNo, 3);
-            Lizzie.board.resendMoveToEngine(Lizzie.leelaz);
+        try {
+          e.startEngine(engineDt.index);
+          featurecat.lizzie.gui.Menu.engineMenu.setText(
+              "[" + (e.currentEngineN() + 1) + "]: " + e.oriEnginename);
+        } catch (IOException e2) {
+          // TODO Auto-generated catch block
+          e2.printStackTrace();
+        }
+        while (!e.isLoaded() || e.isCheckingName) {
+          try {
+            Thread.sleep(100);
+          } catch (InterruptedException e1) {
+            // TODO Auto-generated catch block
+            e1.printStackTrace();
           }
-        }.start();
+        }
+        if (currentEngineNo > 20) LizzieFrame.menu.changeEngineIcon(20, 3);
+        else LizzieFrame.menu.changeEngineIcon(currentEngineNo, 3);
+        Lizzie.board.resendMoveToEngine(Lizzie.leelaz);
       } else {
         if (e.preload) {
-          new Thread() {
-            public void run() {
-              try {
-                e.startEngine(engineDt.index);
-              } catch (IOException e) {
-                // TODO Auto-generated catch block
-                e.printStackTrace();
-              }
-            }
-          }.start();
+          try {
+            e.startEngine(engineDt.index);
+          } catch (IOException e1) {
+            // TODO Auto-generated catch block
+            e1.printStackTrace();
+          }
         }
       }
       engineList.add(e);
@@ -130,6 +120,7 @@ public class EngineManager {
     currentEngineNo = index;
     engineNo = index;
     if (index == -1) {
+      Lizzie.leelaz = new Leelaz("");
       Lizzie.leelaz.isKatago = true;
       Lizzie.leelaz.isLoaded = true;
       featurecat.lizzie.gui.Menu.engineMenu.setText(resourceBundle.getString("Menu.noEngine"));
@@ -153,31 +144,31 @@ public class EngineManager {
           });
     }
     Lizzie.gtpConsole.console.setText("");
-    autoCheckEngineAlive(Lizzie.config.autoCheckEngineAlive);
+    //  autoCheckEngineAlive(Lizzie.config.autoCheckEngineAlive);
     if (Lizzie.config.uiConfig.optBoolean("autoload-empty", false) && Lizzie.config.showStatus)
       Lizzie.frame.refresh();
   }
 
-  public void autoCheckEngineAlive(boolean enable) {
-    if (enable) {
-      if (timer == null) {
-        timer =
-            new Timer(
-                5000,
-                new ActionListener() {
-                  public void actionPerformed(ActionEvent evt) {
-                    checkEngineAlive();
-                    try {
-                    } catch (Exception e) {
-                    }
-                  }
-                });
-        timer.start();
-      } else timer.start();
-    } else {
-      if (timer != null) timer.stop();
-    }
-  }
+  //  public void autoCheckEngineAlive(boolean enable) {
+  //    if (enable) {
+  //      if (timer == null) {
+  //        timer =
+  //            new Timer(
+  //                5000,
+  //                new ActionListener() {
+  //                  public void actionPerformed(ActionEvent evt) {
+  //                    checkEngineAlive();
+  //                    try {
+  //                    } catch (Exception e) {
+  //                    }
+  //                  }
+  //                });
+  //        timer.start();
+  //      } else timer.start();
+  //    } else {
+  //      if (timer != null) timer.stop();
+  //    }
+  //  }
 
   public boolean startEngineGame(
       int engineBlack,
@@ -1540,102 +1531,102 @@ public class EngineManager {
   //    //    }
   //  }
 
-  private void checkEngineAlive() {
-    if (isEmpty) return;
-    if (!isEngineGame && Lizzie.leelaz != null) {
-      if (Lizzie.leelaz.getProcess() != null
-          && Lizzie.leelaz.isLoaded()
-          && Lizzie.leelaz.canCheckAlive
-          && !Lizzie.leelaz.getProcess().isAlive())
-        try {
-          Lizzie.leelaz.restartClosedEngine(currentEngineNo);
-        } catch (IOException e) {
-          // TODO Auto-generated catch block
-          e.printStackTrace();
-        }
-      if (Lizzie.leelaz.useJavaSSH && Lizzie.leelaz.isLoaded() && Lizzie.leelaz.canCheckAlive) {
-        if (Lizzie.leelaz.javaSSHClosed)
-          try {
-            Lizzie.leelaz.restartClosedEngine(currentEngineNo);
-          } catch (IOException e) {
-            // TODO Auto-generated catch block
-            e.printStackTrace();
-          }
-      }
-    }
-    //   if (isEngineGame) {
-    //    {
-    // checkEngineNotHang();
-    checkEnginePK();
-    // if (Lizzie.leelaz.resigned) Lizzie.leelaz.pkResign();
-    //        if (Lizzie.leelaz.isPondering() && (timer3 == null || !timer3.isRunning())) {
-    //          timer3 =
-    //              new Timer(
-    //                  5000,
-    //                  new ActionListener() {
-    //                    public void actionPerformed(ActionEvent evt) {
-    //
-    //
-    //                      try {
-    //                      } catch (Exception e) {
-    //                      }
-    //                    }
-    //                  });
-    //          timer3.start();
-    //        }
-    //      }
-    //      if ((timer2 == null || !timer2.isRunning())) {
-    //        timer2 =
-    //            new Timer(
-    //                20000,
-    //                new ActionListener() {
-    //                  public void actionPerformed(ActionEvent evt) {
-    //                    checkEnginePK();
-    //                    try {
-    //                    } catch (Exception e) {
-    //                    }
-    //                  }
-    //                });
-    //        timer2.start();
-    //    }
-    //   }
-  }
+  //  private void checkEngineAlive() {
+  //    if (isEmpty) return;
+  //    if (!isEngineGame && Lizzie.leelaz != null) {
+  //      if (Lizzie.leelaz.getProcess() != null
+  //          && Lizzie.leelaz.isLoaded()
+  //          && Lizzie.leelaz.canCheckAlive
+  //          && !Lizzie.leelaz.getProcess().isAlive())
+  //        try {
+  //          Lizzie.leelaz.restartClosedEngine(currentEngineNo);
+  //        } catch (IOException e) {
+  //          // TODO Auto-generated catch block
+  //          e.printStackTrace();
+  //        }
+  //      if (Lizzie.leelaz.useJavaSSH && Lizzie.leelaz.isLoaded() && Lizzie.leelaz.canCheckAlive) {
+  //        if (Lizzie.leelaz.javaSSHClosed)
+  //          try {
+  //            Lizzie.leelaz.restartClosedEngine(currentEngineNo);
+  //          } catch (IOException e) {
+  //            // TODO Auto-generated catch block
+  //            e.printStackTrace();
+  //          }
+  //      }
+  //    }
+  //    //   if (isEngineGame) {
+  //    //    {
+  //    // checkEngineNotHang();
+  //    checkEnginePK();
+  //    // if (Lizzie.leelaz.resigned) Lizzie.leelaz.pkResign();
+  //    //        if (Lizzie.leelaz.isPondering() && (timer3 == null || !timer3.isRunning())) {
+  //    //          timer3 =
+  //    //              new Timer(
+  //    //                  5000,
+  //    //                  new ActionListener() {
+  //    //                    public void actionPerformed(ActionEvent evt) {
+  //    //
+  //    //
+  //    //                      try {
+  //    //                      } catch (Exception e) {
+  //    //                      }
+  //    //                    }
+  //    //                  });
+  //    //          timer3.start();
+  //    //        }
+  //    //      }
+  //    //      if ((timer2 == null || !timer2.isRunning())) {
+  //    //        timer2 =
+  //    //            new Timer(
+  //    //                20000,
+  //    //                new ActionListener() {
+  //    //                  public void actionPerformed(ActionEvent evt) {
+  //    //                    checkEnginePK();
+  //    //                    try {
+  //    //                    } catch (Exception e) {
+  //    //                    }
+  //    //                  }
+  //    //                });
+  //    //        timer2.start();
+  //    //    }
+  //    //   }
+  //  }
 
-  private void checkEnginePK() {
-    if (!isEngineGame) {
-      return;
-    }
-    if (engineList.get(engineGameInfo.firstEngineIndex).canCheckAlive
-        && ((engineList.get(engineGameInfo.firstEngineIndex).getProcess() != null
-                && !engineList.get(engineGameInfo.firstEngineIndex).getProcess().isAlive())
-            || (engineList.get(engineGameInfo.firstEngineIndex).useJavaSSH
-                && engineList.get(engineGameInfo.firstEngineIndex).javaSSHClosed))) {
-      try {
-        restartEngineForPk(engineGameInfo.firstEngineIndex);
-      } catch (Exception e) {
-        // TODO Auto-generated catch block
-        e.printStackTrace();
-      }
-    }
-    if (engineList.get(engineGameInfo.secondEngineIndex).canCheckAlive
-        && ((engineList.get(engineGameInfo.secondEngineIndex).getProcess() != null
-                && !engineList.get(engineGameInfo.secondEngineIndex).getProcess().isAlive())
-            || (engineList.get(engineGameInfo.secondEngineIndex).useJavaSSH
-                && engineList.get(engineGameInfo.secondEngineIndex).javaSSHClosed))) {
-      try {
-        restartEngineForPk(engineGameInfo.secondEngineIndex);
-      } catch (Exception e) {
-        // TODO Auto-generated catch block
-        e.printStackTrace();
-      }
-    }
-    //    try {
-    //      timer2.stop();
-    //      // timer2 = null;
-    //    } catch (Exception ex) {
-    //
-    //    }
-  }
+  //  private void checkEnginePK() {
+  //    if (!isEngineGame) {
+  //      return;
+  //    }
+  //    if (engineList.get(engineGameInfo.firstEngineIndex).canCheckAlive
+  //        && ((engineList.get(engineGameInfo.firstEngineIndex).getProcess() != null
+  //                && !engineList.get(engineGameInfo.firstEngineIndex).getProcess().isAlive())
+  //            || (engineList.get(engineGameInfo.firstEngineIndex).useJavaSSH
+  //                && engineList.get(engineGameInfo.firstEngineIndex).javaSSHClosed))) {
+  //      try {
+  //        restartEngineForPk(engineGameInfo.firstEngineIndex);
+  //      } catch (Exception e) {
+  //        // TODO Auto-generated catch block
+  //        e.printStackTrace();
+  //      }
+  //    }
+  //    if (engineList.get(engineGameInfo.secondEngineIndex).canCheckAlive
+  //        && ((engineList.get(engineGameInfo.secondEngineIndex).getProcess() != null
+  //                && !engineList.get(engineGameInfo.secondEngineIndex).getProcess().isAlive())
+  //            || (engineList.get(engineGameInfo.secondEngineIndex).useJavaSSH
+  //                && engineList.get(engineGameInfo.secondEngineIndex).javaSSHClosed))) {
+  //      try {
+  //        restartEngineForPk(engineGameInfo.secondEngineIndex);
+  //      } catch (Exception e) {
+  //        // TODO Auto-generated catch block
+  //        e.printStackTrace();
+  //      }
+  //    }
+  //    //    try {
+  //    //      timer2.stop();
+  //    //      // timer2 = null;
+  //    //    } catch (Exception ex) {
+  //    //
+  //    //    }
+  //  }
 
   public void updateEngines() {
     isUpdating = true;
@@ -1818,9 +1809,10 @@ public class EngineManager {
     try {
       //  Lizzie.leelaz.normalQuit();
       Lizzie.leelaz.isNormalEnd = true;
-      if (Lizzie.leelaz.useJavaSSH) {
-        Lizzie.leelaz.javaSSH.close();
-      } else Lizzie.leelaz.getProcess().destroyForcibly();
+      //    if (Lizzie.leelaz.useJavaSSH) {
+      //      Lizzie.leelaz.javaSSH.close();
+      //     } else
+      Lizzie.leelaz.shutdown(); // .getProcess().destroy();
       Thread.sleep(200);
       Lizzie.leelaz.started = false;
       Lizzie.leelaz.isLoaded = false;
@@ -1836,9 +1828,10 @@ public class EngineManager {
     if (isEmpty || Lizzie.leelaz == null) return;
     try {
       engineList.get(index).isNormalEnd = true;
-      if (engineList.get(index).useJavaSSH) {
-        engineList.get(index).javaSSH.close();
-      } else engineList.get(index).getProcess().destroyForcibly();
+      //      if (engineList.get(index).useJavaSSH) {
+      //        engineList.get(index).javaSSH.close();
+      //      } else engineList.get(index).getProcess().destroyForcibly();
+      Lizzie.leelaz.shutdown(); //
       Thread.sleep(200);
       engineList.get(index).started = false;
       engineList.get(index).isLoaded = false;
@@ -1854,10 +1847,11 @@ public class EngineManager {
     if (Lizzie.leelaz2 == null) return;
     try {
       // Lizzie.leelaz2.normalQuit();
-      if (Lizzie.leelaz2.useJavaSSH) {
-        Lizzie.leelaz2.javaSSH.close();
-      }
-      Lizzie.leelaz2.getProcess().destroyForcibly();
+      //      if (Lizzie.leelaz2.useJavaSSH) {
+      //        Lizzie.leelaz2.javaSSH.close();
+      //      }
+      //      Lizzie.leelaz2.getProcess().destroyForcibly();
+      Lizzie.leelaz.shutdown(); //
       Thread.sleep(200);
       Lizzie.leelaz2.started = false;
       Lizzie.leelaz2.isLoaded = false;

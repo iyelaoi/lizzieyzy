@@ -96,16 +96,17 @@ public class AnalysisTable {
     stopStartAnalysisMode.addActionListener(
         new ActionListener() {
           public void actionPerformed(ActionEvent e) {
-            if (Lizzie.frame.isBatchAnalysisMode && Lizzie.frame.analysisEngine != null) {
-              Lizzie.frame.analysisEngine.waitFrame.setVisible(false);
-              Lizzie.frame.destroyAnalysisEngine();
-              Lizzie.frame.isBatchAnalysisMode = false;
-            } else {
-              verifyCurrentKifu();
-              Lizzie.frame.isBatchAna = true;
-              StartAnaDialog newgame = new StartAnaDialog(true, Lizzie.frame);
-              newgame.setVisible(true);
-            }
+            //            if (Lizzie.frame.isBatchAnalysisMode && Lizzie.frame.analysisEngine !=
+            // null) {
+            //              Lizzie.frame.analysisEngine.waitFrame.setVisible(false);
+            //              Lizzie.frame.destroyAnalysisEngine();
+            //              Lizzie.frame.isBatchAnalysisMode = false;
+            //            } else {
+            //              verifyCurrentKifu();
+            //              Lizzie.frame.isBatchAna = true;
+            //              StartAnaDialog newgame = new StartAnaDialog(true, Lizzie.frame);
+            //              newgame.setVisible(true);
+            //            }
           }
         });
     stopStartAnalysisMode.setBounds(210, 2, 130, 25);

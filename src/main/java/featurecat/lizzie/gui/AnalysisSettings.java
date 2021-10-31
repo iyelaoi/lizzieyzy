@@ -145,13 +145,13 @@ public class AnalysisSettings extends JDialog {
         new ActionListener() {
           public void actionPerformed(ActionEvent e) {
             {
-              if (Lizzie.frame.analysisEngine != null
-                  && Lizzie.frame.analysisEngine.waitFrame != null)
-                Lizzie.frame.analysisEngine.waitFrame.setVisible(false);
-              saveConfig();
-              setVisible(false);
-              Lizzie.frame.destroyAnalysisEngine();
-              Lizzie.frame.flashAnalyzeGame(Lizzie.config.analysisRecentIsPartGame);
+              //              if (Lizzie.frame.analysisEngine != null
+              //                  && Lizzie.frame.analysisEngine.waitFrame != null)
+              //                Lizzie.frame.analysisEngine.waitFrame.setVisible(false);
+              //              saveConfig();
+              //              setVisible(false);
+              //              Lizzie.frame.destroyAnalysisEngine();
+              //              Lizzie.frame.flashAnalyzeGame(Lizzie.config.analysisRecentIsPartGame);
             }
           }
         });
@@ -169,18 +169,18 @@ public class AnalysisSettings extends JDialog {
     btnConfirm.addActionListener(
         new ActionListener() {
           public void actionPerformed(ActionEvent e) {
-            if (fromError) {
-              if (Lizzie.frame.analysisEngine != null
-                  && Lizzie.frame.analysisEngine.waitFrame != null)
-                Lizzie.frame.analysisEngine.waitFrame.setVisible(false);
-              saveConfig();
-              setVisible(false);
-              Lizzie.frame.destroyAnalysisEngine();
-              Lizzie.frame.flashAnalyzeGame(Lizzie.config.analysisRecentIsPartGame);
-            } else {
-              saveConfig();
-              setVisible(false);
-            }
+            //            if (fromError) {
+            //              if (Lizzie.frame.analysisEngine != null
+            //                  && Lizzie.frame.analysisEngine.waitFrame != null)
+            //                Lizzie.frame.analysisEngine.waitFrame.setVisible(false);
+            //              saveConfig();
+            //              setVisible(false);
+            //              Lizzie.frame.destroyAnalysisEngine();
+            //              Lizzie.frame.flashAnalyzeGame(Lizzie.config.analysisRecentIsPartGame);
+            //            } else {
+            //              saveConfig();
+            //              setVisible(false);
+            //            }
           }
         });
     btnConfirm.setBounds(484, 321, 93, 31);
