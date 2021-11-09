@@ -1052,7 +1052,7 @@ public class SubBoardRenderer {
               //                  ? stoneY + stoneRadius / 10:
               stoneY,
               LizzieFrame.uiFont,
-              moveNumberString,
+              "0",
               (float) (stoneRadius * 1.8),
               (float) (stoneRadius * 1.7));
         }
